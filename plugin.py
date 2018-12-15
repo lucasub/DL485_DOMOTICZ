@@ -72,7 +72,7 @@ import dl485
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 b = dl485.Bus()  # Istanza la classe Bus
 
-config_file_name = "/home/pi/domoticz/plugins/DL485_SERIAL/config.json"  # File di configurazione
+config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
 b.getJsonConfig(config_file_name)
 b.BOARD_ADDRESS = int(b.config['GENERAL']['board_address'])
 
@@ -423,7 +423,7 @@ class BasePlugin:
                             self.log(msg)
 
                         if self.RXtrama[1] == 14 or self.RXtrama[1] == 8:  # COMUNICA_IO / Scrive valore USCITA
-                            # board_id, io_logic, value = b.updateState(self.RXtrama[0], self.RXtrama[2], value)
+                            print()
                             self.updateIO(self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:])  # Aggiorna DOMOTICZ
 
                     else:
