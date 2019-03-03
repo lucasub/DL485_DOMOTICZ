@@ -389,7 +389,7 @@ class BasePlugin:
                         # print("Trasmetto:", msg)
                         msg = b.eight2seven(msg)
                         # print("{:<11} ==>>{:<15}".format('MSG 8 to 7', b.int2hex(msg)))
-                        msg = b.calcCrcTx(msg)
+                        msg = b.encodeMsgCalcCrcTx(msg)
                         # print("Trasmetto CRC:", msg)
                         Connection.Send(bytes(msg))
 
@@ -423,7 +423,6 @@ class BasePlugin:
                             self.log(msg)
 
                         if self.RXtrama[1] == 14 or self.RXtrama[1] == 8:  # COMUNICA_IO / Scrive valore USCITA
-                            print()
                             self.updateIO(self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:])  # Aggiorna DOMOTICZ
 
                     else:
