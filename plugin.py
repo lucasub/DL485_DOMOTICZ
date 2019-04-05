@@ -162,7 +162,7 @@ class BasePlugin:
         board_id = int(bio[0])
         io_logic = int(bio[1])
         value = 1 if Command == 'On' else 0
-        value = b.make_inverted(board_id, io_logic, value)
+        # value = b.make_inverted(board_id, io_logic, value)
         msg = b.writeIO(board_id, io_logic, [value])
         self.TXmsg.append(msg)
 
@@ -178,6 +178,7 @@ class BasePlugin:
         DeviceID = '%s-%s' %(board_id, io_logic)
         Unit = self.mapUnit2DeviceID[DeviceID]
         dtype = b.mapiotype[board_id][io_logic]['dtype']
+
         if (Unit in Devices):
             # Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
             if dtype == 'Switch':
@@ -189,14 +190,16 @@ class BasePlugin:
                 # b5: fronte ON da trasmettere
 
                 x_value = value[0]
-                value = b.make_inverted(board_id, io_logic, value[0] & 1)  # Inverte l'IO se definito sul file di configurazione
+                value = value[0]
+                # value = b.make_inverted(board_id, io_logic, value[0] & 1)  # Inverte l'IO se definito sul file di configurazione
                 b.status[board_id]['io'][io_logic - 1] = value
                 sValue = 'On' if value & 1 == 1 else 'Off'
-
                 Devices[Unit].Update(value & 1, sValue)
-
                 linked_proc = b.mapproc[DeviceID] if DeviceID in b.mapproc else {}
-                if linked_proc:
+                
+                plc_function = b.mapiotype[board_id][io_logic]['plc_function']
+
+                if linked_proc and plc_function == 'disable':
                     """
                         elenco linked proc
                         toggle
@@ -218,8 +221,7 @@ class BasePlugin:
                         x_io_logic = int(x_outa[1])
 
                         app_linked_proc = linked_proc["%s-%s" %(x_outa[0], x_outa[1])]['linked_proc']
-                        # print("------------", app_linked_proc)
-
+                        
                         if app_linked_proc == 'toggle':
                             if x_value & 0b100:
                                 value = b.status[x_board_id]['io'][x_io_logic - 1]
@@ -279,7 +281,10 @@ class BasePlugin:
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
                             self.TXmsg.append(msg)
                     
-                    Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, msg))
+                    try:
+                        Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, msg))
+                    except:
+                        print("ERROR send Devices dtype:{}, Board_id:{}, io_logic:{}".format(dtype, board_id, io_logic))
 
             elif dtype == 'Voltage':
                 value = b.calculate(board_id, io_logic, value)
@@ -366,7 +371,7 @@ class BasePlugin:
             # print(d)
             self.RXtrama = b.readSerial(d)
             if self.RXtrama:
-                print(self.RXtrama)
+                # print(self.RXtrama)
                 b.labinitric()  # Resetta la coda per nuova ricezione alla fine dei calcoli
                 self.board_ready[self.RXtrama[0]] = self.nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo
                 
