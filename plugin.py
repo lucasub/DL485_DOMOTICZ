@@ -1,23 +1,7 @@
 """
 <plugin key="DLBOARD" name="DL Board plugin - SERIAL" author="Luca Subiaco e Daniele Gava" version="1.0.0" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
 	<params>
-        <param field="SerialPort" label="Serial Port" width="200px" required="true"/>
-
-        <param field="Mode3" label="Speed RS485" width="150px">
-            <options>
-                <option label="1200" value=1200/>
-                <option label="2400" value=2400/>
-                <option label="4800" value=4800/>
-                <option label="9600" value=9600   default="true"/>
-                <option label="14400" value=14400/>
-                <option label="19200" value=19200/>
-                <option label="28800" value=28800/>
-                <option label="38400" value=38400/>
-                <option label="57600" value=57600/>
-                <option label="115200" value=115200/>
-        	</options>
-        </param>
-        <param field="Mode6" label="Debug" width="75px">
+         <param field="Mode6" label="Debug" width="125px">
             <options>
                 <option label="None" value="0"  default="true"/>
                 <option label="Verbose" value="2"/>
@@ -72,38 +56,32 @@ import time
 import sys
 from pprint import pprint
 import json
-import dl485
+from dl485 import Bus, Log
 
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
-b = dl485.Bus()  # Istanza la classe Bus
-l = dl485.Log()
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
-b.getJsonConfig(config_file_name)
-b.BOARD_ADDRESS = int(b.config['GENERAL']['board_address'])
+logstate = 1
+b = Bus(config_file_name, logstate)  # Istanza la classe Bus
+# log = Log()  # Istanza la classe Log
 
 # Configurazione SCHEDE
-msg = b.resetEE(1, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
+# msg = b.resetEE(1, 0)  # Board_id, io_logic. Se io_logic=0, resetta tutti gli IO
 # print(msg)
-# self.TXmsg += msg
-b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
+# b.TXmsg += msg
+# b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
 
 """ LOOP """
 class BasePlugin:
     def __init__(self):
         self.debug = 0
-        self.RXtrama = []
-        self.TXmsg = []  # Lista che contiene le liste da trasmettere sul BUS
-        self.BOARD_ADDRESS = b.BOARD_ADDRESS
-        self.nowtime = 0
-        self.board_ready = {}
-        self.oldtime = time.time() - 10  # init self.oldtime per stampe dizionario con i/o per stampa subito al primo loop
         self.mapUnit2DeviceID = {}
-        configuration = b.sendConfiguration()  # Set configuration of boards
+        configuration = b.getConfiguration()  # Set configuration of boards
         # print("Configuration:", configuration)
-        self.TXmsg = configuration
+        b.TXmsg = configuration
 
     def onStart(self):
         self.debug = int(Parameters["Mode6"])
+        
         Domoticz.Log("Start DL485 Loop Plugin with Debug: %s" %self.debug)       
         """
         0 	None. All Python and framework debugging is disabled.
@@ -122,6 +100,15 @@ class BasePlugin:
 
         for board_id in b.mapiotype:
             for io_logic in b.mapiotype[board_id]:
+                if not b.mapiotype[board_id][io_logic]['board_enable']:
+                    continue
+                
+                enable = b.mapiotype[board_id][io_logic]['enable']
+                if not enable:
+                    # print("Board_id:{}, Io_logic:{} DISABILITATI".format(board_id, io_logic))
+                    continue
+                
+                print("*************** Board_id:{}, Io_logic:{} ABILITATI".format(board_id, io_logic))
                 Unit += 1
                 DeviceID = "%s-%s" % (board_id, io_logic)
                 self.mapUnit2DeviceID[Unit] = DeviceID
@@ -129,7 +116,7 @@ class BasePlugin:
                 name = "%s %s" % (DeviceID, b.mapiotype[board_id][io_logic]['name'])
                 description = b.mapiotype[board_id][io_logic]['description']
                 dtype = b.mapiotype[board_id][io_logic]['dtype']
-
+                
                 # Create new device on Domoticz
                 if not Unit in Devices:
                     Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID ,Used=1 ).Create()
@@ -148,7 +135,8 @@ class BasePlugin:
                 Devices[Unit].Update(Name = name, TypeName = dtype, Description = description,
                                      Used = 1, nValue = value, sValue = sValue )
 
-        self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = Parameters["SerialPort"], Baud = int(Parameters["Mode3"]))
+#        self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = Parameters["SerialPort"], Baud = int(Parameters["Mode3"]))
+        self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = b.bus_port, Baud = b.bus_baudrate)
         self.SerialConn.Connect()
 
     def onStop(self):
@@ -164,20 +152,27 @@ class BasePlugin:
         value = 1 if Command == 'On' else 0
         # value = b.make_inverted(board_id, io_logic, value)
         msg = b.writeIO(board_id, io_logic, [value])
-        self.TXmsg.append(msg)
+        b.TXmsg.append(msg)
 
     def updateIO(self, board_id, io_logic, value):
         """
         Viene chiamata quando arriva una trama dalla rete per poter decodificare il messaggio e aggiornare lo stato di Domoticz
         """
+        
         if not board_id in b.mapiotype or not io_logic in b.mapiotype[board_id]:
+            print("updateIO -> Board ID %s o IoLofic %s non trovati sul file di configurazione" %(board_id, io_logic) )
             return
         if not value:
+            print("updateIO -> Valore vuoto")
             return
-
+            
         DeviceID = '%s-%s' %(board_id, io_logic)
+        if not DeviceID in self.mapUnit2DeviceID: return
+
         Unit = self.mapUnit2DeviceID[DeviceID]
         dtype = b.mapiotype[board_id][io_logic]['dtype']
+
+        # print("==>>dtype: {:<15} board_id: {:<5} io_logic: {:<5} value: {}".format(dtype, board_id, io_logic, value))
 
         if (Unit in Devices):
             # Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
@@ -230,21 +225,21 @@ class BasePlugin:
                                 value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                                 # print("TOGGLE", x_out, value)
                                 msg = b.writeIO(x_board_id, x_io_logic, [value])
-                                self.TXmsg.append(msg)
+                                b.TXmsg.append(msg)
 
                         elif app_linked_proc == 'direct':
                             value = x_value & 1
                             value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                             # print("DIRECT", x_out, value)
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
-                            self.TXmsg.append(msg)
+                            b.TXmsg.append(msg)
 
                         elif app_linked_proc == 'invert':
                             value = (x_value & 1) ^ 1
                             value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                             # print("INVERT", x_out, value)
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
-                            self.TXmsg.append(msg)
+                            b.TXmsg.append(msg)
                         elif app_linked_proc == 'and':
                             linked_board_id_io_logic = b.mapiotype[x_board_id][x_io_logic]['linked_board_id_io_logic']
                             # print("linked_board_id_io_logic", linked_board_id_io_logic)
@@ -256,7 +251,7 @@ class BasePlugin:
                                 value = value & b.status[ii_board_id]['io'][ii_io_logic - 1]
                             value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
-                            self.TXmsg.append(msg)
+                            b.TXmsg.append(msg)
 
                         elif app_linked_proc == 'or':
                             linked_board_id_io_logic = b.mapiotype[x_board_id][x_io_logic]['linked_board_id_io_logic']
@@ -268,7 +263,7 @@ class BasePlugin:
                                 value = value | b.status[ii_board_id]['io'][ii_io_logic - 1]
                             value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
-                            self.TXmsg.append(msg)
+                            b.TXmsg.append(msg)
                         elif app_linked_proc == 'xor':
                             linked_board_id_io_logic = b.mapiotype[x_board_id][x_io_logic]['linked_board_id_io_logic']
                             value = 0
@@ -279,12 +274,12 @@ class BasePlugin:
                                 value = value ^ b.status[ii_board_id]['io'][ii_io_logic - 1]
                             value = b.make_inverted(x_board_id, x_io_logic, value)  # Inverte l'IO se definito sul file di configurazione
                             msg = b.writeIO(x_board_id, x_io_logic, [value])
-                            self.TXmsg.append(msg)
+                            b.TXmsg.append(msg)
                     
-                    try:
-                        Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, msg))
-                    except:
-                        print("ERROR send Devices dtype:{}, Board_id:{}, io_logic:{}".format(dtype, board_id, io_logic))
+                    # try:
+                    #     Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, msg))
+                    # except:
+                    #     print("ERROR send Devices dtype:{}, Board_id:{}, io_logic:{}".format(dtype, board_id, io_logic))
 
             elif dtype == 'Voltage':
                 value = b.calculate(board_id, io_logic, value)
@@ -357,110 +352,53 @@ class BasePlugin:
                 b.status[board_id]['io'][io_logic - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
                 Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
-
-    def log(self, msg):
-        """
-        Print LOG if debuf==True
-        """
-        if self.debug:
-            print("{} {:<30}".format(self.nowtime, msg))
-
-    def onMessage(self, Connection, Data):
-        self.nowtime = int(time.time())
-        for d in Data:
-            # print(d)
-            self.RXtrama = b.readSerial(d)
-            if self.RXtrama:
-                # print(self.RXtrama)
-                b.labinitric()  # Resetta la coda per nuova ricezione alla fine dei calcoli
-                self.board_ready[self.RXtrama[0]] = self.nowtime  # Aggiorna la data di quando è stato ricevuto la trama del nodo
+            
+            elif dtype == 'Counter Incremental':
+                value = b.calculate(board_id, io_logic, value)
+                b.status[board_id]['io'][io_logic - 1] = value
+                Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
+                Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
+            
+            elif dtype == "kWh":
+                value = b.calculate(board_id, io_logic, value)
+                b.status[board_id]['io'][io_logic - 1] = value
+                # str(en_0)+";"+str(en_1 * 1000)
+                Devices[Unit].Update(nValue = 0, sValue = "%s;%s" %(value, 0)) 
                 
-                if len(self.TXmsg):  # Controlla se c'è qualcosa da trasmettere
+            elif dtype == "Counter":
+                value = b.calculate(board_id, io_logic, value)
+                b.status[board_id]['io'][io_logic - 1] = value
+                Devices[Unit].Update(nValue = value, sValue = str(value))     
 
-                    if self.BOARD_ADDRESS - 1 == self.RXtrama[0]:
-                        msg = self.TXmsg.pop(0)
-                        Domoticz.Log("TX on BUS: %s" %msg )
-                        msg = b.eight2seven(msg)
-                        msg = b.encodeMsgCalcCrcTx(msg)
-                        Connection.Send(bytes(msg))
+            elif dtype == "Custom Sensor":
+                value = b.calculate(board_id, io_logic, value)
+                b.status[board_id]['io'][io_logic - 1] = value
+                Devices[Unit].Update(nValue = int(value), sValue = str(value)) 
 
-                if len(self.RXtrama) == 1:  # Mosra solo PING
-                    pass
-                    # print(self.RXtrama)
-
-                if len(self.RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
-                    if self.RXtrama[1] in b.code or (self.RXtrama[1] - 32) in b.code:
-                        # print("-----------", self.RXtrama[1], code[self.RXtrama[1]])
-
-                        if self.RXtrama[1] > 32:
-                            self.RXtrama[1] = self.RXtrama[1] - 32
-                            rtx = 'RX'
-                        else:
-                            rtx = 'TX'
-
-                        if self.RXtrama[1] == 13 or self.RXtrama[1] - 32 == 13:  # Error message
-                            # 5 byte:
-                            # 1: IDBUS,
-                            # 2: 29 16+13,
-                            # 3: Comando che ha generato l'errore,
-                            # 4: ID Logico associato al comando, codice errore
-                            # 5: Tipo errore
-                            err = '' if not self.RXtrama[4] in b.error else b.error[self.RXtrama[4]]
-                            code = '' if not self.RXtrama[1] in b.code else b.code[self.RXtrama[1]]
-                            msg = '{:<4} {:<20} {} {:<30} {}'.format(rtx, code, self.RXtrama, '', err)
-                            self.log(msg)
-                        else:
-                            msg = '{:<4} {:<20} {}'.format(rtx, b.code[self.RXtrama[1]], self.RXtrama)
-                            self.log(msg)
-
-                        if self.RXtrama[1] == 14 or self.RXtrama[1] == 8:  # COMUNICA_IO / Scrive valore USCITA
-                            self.updateIO(self.RXtrama[0], self.RXtrama[2], self.RXtrama[3:])  # Aggiorna DOMOTICZ
-
-                    else:
-                        if self.RXtrama[1] > 32:
-                            self.RXtrama[1] = self.RXtrama[1] - 32
-                            rtx = 'RX'
-                        else:
-                            rtx = 'TX'
-                        msg = "{:<4} {:<20} {} {:<30} {}".format(rtx, '', self.RXtrama, '', 'ERRORE NON CODIFICATO')
-                        self.log(msg)
-                        Domoticz.Error("RXTRAMA - MSG NON CODIFICATO: {}".format(self.RXtrama))
-                        
-
-        # if self.debug and (self.nowtime - self.oldtime > 10):
-        if (self.nowtime - self.oldtime > 10):
-            self.TXmsg.append(b.ping())  # Not remove. Is neccesary to reset shutdown counter
-            self.oldtime = self.nowtime
-
-            # self.TXmsg.append(b.boardReboot(0))  # Reboot board
-            # To send custom msg
-            # print("SEND CUSTOM MESSAGE")
-            # self.TXmsg.append(b.getTypeBoard(20))
-            # self.TXmsg.append(b.getTypeBoard(20))
-            # self.TXmsg.append(b.boardReboot(20))
-
-            board_to_remove = []
-            for k, v in self.board_ready.items():
-                # print(v, nowtime-v, v)
-                if (self.nowtime - v) > 5:
-                    board_to_remove.append(k)
-            for k in board_to_remove:
-                del self.board_ready[k]
-
-            msg = "     BOARD_READY          {:<17} ".format(str(list(self.board_ready.keys())))
-            self.log(msg)
-            b.printStatus()  # Print status of IO
+    def onMessage(self, Connection, RXbytes):
+        for d in RXbytes:
+            b.RXtrama = b.readSerial(d)
+            
+            if not b.RXtrama: 
+                continue
+            
+            b.arrivatatrama()
+            
+            # print(b.RXtrama)
+            # print(b.RXtrama) # Non togliere altrimenti non funziona
+            if len(b.RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
+                # print(b.RXtrama) # Non togliere altrimenti non funziona
+                if (b.RXtrama[1] in b.code) or ((b.RXtrama[1] - 32) in b.code):
+                    if b.RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITA
+                        self.updateIO(b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
+                
+            b.writeLog()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         pass
-        # Domoticz.Log("%s %s %s %s %s %s %s %s %s %s %s" % (s, "onNotification", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
-        # print("%s %s %s %s %s %s %s %s %s %s %s" % (s, "onNotification", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
 
     def onDisconnect(self, Connection):
         Domoticz.Log("onDisconnect called")
-        # self.SerialConn = Close
-        # Domoticz.Log("%s %s %s %s" % (s, "onDisconnect", self, Connection))
-        # print("%s %s %s %s" % (s, "onDisconnect", self, Connection))
         Domoticz.Log("Plugin DL485 Disconnected")
 
     def onHeartbeat(self):
