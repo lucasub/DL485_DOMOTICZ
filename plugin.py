@@ -160,11 +160,11 @@ class BasePlugin:
         """
         
         if not board_id in b.mapiotype or not io_logic in b.mapiotype[board_id]:
-            print("updateIO -> Board ID %s o IoLofic %s non trovati sul file di configurazione" %(board_id, io_logic) )
+            print("updateIO -> Board ID %s o IoLogic %s non trovati sul file di configurazione" %(board_id, io_logic) )
             return
-        if not value:
-            print("updateIO -> Valore vuoto")
-            return
+        # if not value:
+        #     print("updateIO -> Valore vuoto")
+        #     return
             
         DeviceID = '%s-%s' %(board_id, io_logic)
         if not DeviceID in self.mapUnit2DeviceID: return
@@ -184,17 +184,22 @@ class BasePlugin:
                 # b4: fronte OFF da trasmettere
                 # b5: fronte ON da trasmettere
 
-                x_value = value[0]
-                value = value[0]
+                # x_value = value[0]
+                # value = value[0]
                 # value = b.make_inverted(board_id, io_logic, value[0] & 1)  # Inverte l'IO se definito sul file di configurazione
-                b.status[board_id]['io'][io_logic - 1] = value
+                # b.status[board_id]['io'][io_logic - 1] = value
+
                 sValue = 'On' if value & 1 == 1 else 'Off'
                 Devices[Unit].Update(value & 1, sValue)
+                
                 linked_proc = b.mapproc[DeviceID] if DeviceID in b.mapproc else {}
+                
+                
                 
                 plc_function = b.mapiotype[board_id][io_logic]['plc_function']
 
-                if linked_proc and plc_function == 'disable':
+                # print("-------------", linked_proc, plc_function)
+                if linked_proc and plc_function == 'disable' and 1==2: # Da rifare perché non FUNZIONA
                     """
                         elenco linked proc
                         toggle
@@ -282,15 +287,15 @@ class BasePlugin:
                     #     print("ERROR send Devices dtype:{}, Board_id:{}, io_logic:{}".format(dtype, board_id, io_logic))
 
             elif dtype == 'Voltage':
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 sValue = str(value)
                 b.status[board_id]['io'][io_logic - 1] = value
-                b.voltageLimit(board_id, io_logic, value)  # Check and power down if limit voltage
+#                b.voltageLimit(board_id, io_logic, value)  # Check and power down if limit voltage
                 Devices[Unit].Update(nValue = int(value), sValue = sValue)
                 Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
 
             elif dtype == 'Temperature':
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 # print("temperature:", value)
                 if value:
                     sValue = str(value)
@@ -300,7 +305,7 @@ class BasePlugin:
                     Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
 
             elif dtype == 'Temp+Hum+Baro':
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 # ranges from about 70% wet, below 30 Dry, between 30 and 45 Normal, and 45 and 70 comfortable
                 #  0=Normal, 1=Comfortable, 2=Dry, 3=Wet
                 hum_stat = 0
@@ -326,7 +331,7 @@ class BasePlugin:
                 Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
                 
             elif dtype == 'Temp+Hum':
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 # print("TEMPERATURA AM2320", board_id, io_logic, value)
 
                 # ranges from about 70% wet, below 30 Dry, between 30 and 45 Normal, and 45 and 70 comfortable
@@ -354,24 +359,24 @@ class BasePlugin:
                 Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
             
             elif dtype == 'Counter Incremental':
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 b.status[board_id]['io'][io_logic - 1] = value
                 Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
                 Domoticz.Debug("Device:{}, Board_id:{}, Io_logic:{}, value:{}".format(dtype, board_id, io_logic, value))
             
             elif dtype == "kWh":
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 b.status[board_id]['io'][io_logic - 1] = value
                 # str(en_0)+";"+str(en_1 * 1000)
                 Devices[Unit].Update(nValue = 0, sValue = "%s;%s" %(value, 0)) 
                 
             elif dtype == "Counter":
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 b.status[board_id]['io'][io_logic - 1] = value
                 Devices[Unit].Update(nValue = value, sValue = str(value))     
 
             elif dtype == "Custom Sensor":
-                value = b.calculate(board_id, io_logic, value)
+                # value = b.calculate(board_id, io_logic, value)
                 b.status[board_id]['io'][io_logic - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue = str(value)) 
 
@@ -390,7 +395,11 @@ class BasePlugin:
                 # print(b.RXtrama) # Non togliere altrimenti non funziona
                 if (b.RXtrama[1] in b.code) or ((b.RXtrama[1] - 32) in b.code):
                     if b.RXtrama[1] in [b.code['COMUNICA_IO'], b.code['CR_WR_OUT']]:  # COMUNICA_IO / Scrive valore USCITA
-                        self.updateIO(b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
+                        value = b.calculate(b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
+                        self.updateIO(b.RXtrama[0], b.RXtrama[2], value)  # Aggiorna DOMOTICZ
+                        
+                        # print("VALUE CALCULATE:", b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:], value)
+
                 
             b.writeLog()
 
