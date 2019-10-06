@@ -1,54 +1,21 @@
 """
-<plugin key="DLBOARD" name="DL Board plugin - SERIAL" author="Luca Subiaco e Daniele Gava" version="1.0.0" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
+<plugin key="DLBOARD" name="DL Board plugin - SERIAL" author="Luca Subiaco e Daniele Gava" version="1.1" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
 	<params>
          <param field="Mode6" label="Debug" width="125px">
             <options>
                 <option label="None" value="0"  default="true"/>
-                <option label="Verbose" value="2"/>
-                <option label="Domoticz Framework - Basic" value="62"/>
-                <option label="Domoticz Framework - Basic+Messages" value="126"/>
-                <option label="Domoticz Framework - Connections Only" value="16"/>
-                <option label="Domoticz Framework - Connections+Queue" value="144"/>
-                <option label="Domoticz Framework - All" value="-1"/>
+                <option label="Very verbose" value="1"/>
+                <option label="Shows messages from Plugin" value="2"/>
+                <option label="Shows high level framework messages only about major the plugin" value="4"/>
+                <option label="Shows plugin framework debug messages related to Devices objects" value="8"/>
+                <option label="Shows plugin framework debug messages related to Connections objects" value="16"/>
+                <option label="Shows plugin framework debug messages related to Images objects" value="32"/>
+                <option label="Dumps contents of inbound and outbound data from Connection objects" value="64"/>
+                <option label="Shows plugin framework debug messages related to the message queue" value="128"/>
             </options>
         </param>
 	</params>
 </plugin>
-"""
-
-"""
-"Air Quality"
-"Alert"
-"Barometer"
-"Counter Incremental"
-"Current/Ampere"7
-"Current (Single)"
-"Custom"
-"Distance"
-"Gas"
-"Humidity"
-"Illumination"
-"kWh"
-"Leaf Wetness"
-"Percentage"
-"Pressure"
-"Rain"
-"Selector Switch"
-"Soil Moisture"
-"Solar Radiation"
-"Sound Level"
-"Switch"
-"Temperature"
-"Temp+Hum"
-"Temp+Hum+Baro"
-"Text"
-"Usage"
-"UV"
-"Visibility"
-"Voltage"
-"Waterflow"
-"Wind"
-"Wind+Temp+Chill"
 """
 
 import Domoticz
@@ -94,13 +61,55 @@ Image:
 class BasePlugin:
     def __init__(self):
         self.debug = 0
-        self.mapUnit2DeviceID = {}
         configuration = b.getConfiguration()  # Set configuration of boards
         b.TXmsg = configuration # Mette trama configurazione in lista da inviare
         self.devices = {
             'Unit2DeviceID': {},
             'DeviceID2Unit': {},
         } # DICT with all devices
+        
+        # print("------------", dir)
+        
+        self.typeName = [
+            "Air Quality",
+            "Alert",
+            "Barometer",
+            "Counter Incremental",
+            "Contact",
+            "Current/Ampere",
+            "Current (Single)",
+            "Custom",
+            "Dimmer",
+            "Distance",
+            "Gas",
+            "Humidity",
+            "Illumination",
+            "kWh",
+            "Leaf Wetness",
+            "Motion",
+            "Percentage",
+            "Push On",
+            "Push Off",
+            "Pressure",
+            "Rain",
+            "Selector Switch",
+            "Soil Moisture",
+            "Solar Radiation",
+            "Sound Level",
+            "Switch",
+            "Temperature",
+            "Temp+Hum",
+            "Temp+Hum+Baro",
+            "Text",
+            "Usage",
+            "UV",
+            "Visibility",
+            "Voltage",
+            "Waterflow",
+            "Wind",
+            "Wind+Temp+Chill",
+        ]
+
 
     def unitPresent(self, listUnit):
         """
@@ -118,20 +127,8 @@ class BasePlugin:
 
     def onStart(self):
         self.debug = int(Parameters["Mode6"])
-        
-        Domoticz.Log("Start DL485 Loop Plugin with Debug: %s" %self.debug)       
-        """
-        0 	None. All Python and framework debugging is disabled.
-        1 	All. Very verbose log from plugin framework and plugin debug messages.
-        2 	Mask value. Shows messages from Plugin Domoticz.Debug() calls only.
-        4 	Mask Value. Shows high level framework messages only about major the plugin.
-        8 	Mask Value. Shows plugin framework debug messages related to Devices objects.
-        16 	Mask Value. Shows plugin framework debug messages related to Connections objects.
-        32 	Mask Value. Shows plugin framework debug messages related to Images objects.
-        64 	Mask Value. Dumps contents of inbound and outbound data from Connection objects.
-        128 	Mask Value. Shows plugin framework debug messages related to the message queue.
-        """
         Domoticz.Debugging(self.debug)
+        Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
         
         for d in Devices:
             print(Devices[d])
@@ -158,15 +155,20 @@ class BasePlugin:
                 name = "[%s] %s" % (DeviceID, b.mapiotype[board_id][logic_io]['name'])
                 description = b.mapiotype[board_id][logic_io]['description']
                 dtype = b.mapiotype[board_id][logic_io]['dtype']
+                device_enable = b.mapiotype[board_id][logic_io]['enable']
                 
                 # print("*** BID:{} IOID:{} - logic_io:{} Board_enable:{} - Domoticz Device ENABLE:{} - DeviceID:{}".format(board_id, board_enable, logic_io, io_enable, device_enable, DeviceID))
+
+                if dtype not in self.typeName:
+                    Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
 
                 if DeviceID not in self.devices['DeviceID2Unit'].keys():
                     unit_present = list(self.devices['Unit2DeviceID'].keys())
                     Unit = self.unitPresent(unit_present)
-                    Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID, Image=image).Create()
+                    Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
                     self.devices['Unit2DeviceID'][Unit] = DeviceID
                     self.devices['DeviceID2Unit'][DeviceID] = Unit
+                    Domoticz.Log("Create Device: Name:{:10}    Dtype:{:10}    Used:{}".format(name, dtype, device_enable))
 
                 value = int(b.mapiotype[board_id][logic_io]['default_startup_value']) if 'default_startup_value' in b.mapiotype[board_id][logic_io] else 0
                 sValue = 'On' if value else 'Off'
@@ -177,20 +179,27 @@ class BasePlugin:
                     sValue = "0;0;0"
                 elif dtype == 'Temp+Hum+Baro':
                     sValue = "0;0;0;0;0"
+                elif dtype == 'kWh':
+                    sValue = "0;0"
+                elif dtype == 'Custom Sensor':
+                    sValue = "0"
+                elif dtype == 'Counter Incremental': # mostra i Watt/ora
+                    sValue = "0"
 
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
 
-                Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=1)
+                Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=device_enable)
+                Domoticz.Log("Udate Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
 
         # self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = Parameters["SerialPort"], Baud = int(Parameters["Mode3"]))
         self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
         self.SerialConn.Connect()
 
     def onStop(self):
-        Domoticz.Log("%s %s" % ("onStop DL485-SERIAL plugin", self))
+        Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
     def onConnect(self, Connection, Status, Description):
-        Domoticz.Log("%s %s %s %s %s" % ("onConnect DL485-SERIAL plugin", self, Connection, Status, Description))
+        Domoticz.Log("{} {} {} {} {}".format("onConnect DL485-SERIAL plugin", self, Connection, Status, Description))
 
     def onCommand(self, Unit, Command, Level, Hue):
         # print("onCommand", Unit, Command, Level, Hue)
@@ -330,8 +339,7 @@ class BasePlugin:
                 sValue = str(value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue = sValue)
-                Domoticz.Debug("Device:{}, Board_id:{}, logic_io:{}, value:{}".format(dtype, board_id, logic_io, value))
-
+            
             elif dtype == 'Temperature':
                 if value:
                     sValue = str(value)
@@ -343,15 +351,15 @@ class BasePlugin:
                         # print(board_id_linked, logic_io_linked)
                         device_type_linked = b.mapiotype[board_id_linked][logic_io_linked]['device_type']
                         if device_type_linked =="PSYCHROMETER":
-                            # print(device_type_linked)
-                            
                             value_humidity = b.status[board_id_linked]['io'][logic_io_linked - 1]
-                            if value_humidity:
-                                print("PSYCHROMETER",value_humidity,  board_id_linked, logic_io_linked)
+                            
+                            if value_humidity:    
                                 DeviceIDLinked = '%s-%s' %(board_id_linked, logic_io_linked)
-                                if not DeviceIDLinked in self.mapUnit2DeviceID: return
+                                if DeviceIDLinked not in self.devices['DeviceID2Unit']: return
 
-                                UnitLinked = self.mapUnit2DeviceID[DeviceIDLinked]
+                                # print(">>>>>>>>>>>>>>>>>>>>>>PSYCHROMETER DEVICE:", DeviceIDLinked)
+                                UnitLinked = self.devices['DeviceID2Unit'][DeviceIDLinked]
+                                
                                 dtypeLinked = b.mapiotype[board_id_linked][logic_io_linked]['dtype']
                                 if value_humidity < 40:
                                     hum_status = 2
@@ -363,12 +371,12 @@ class BasePlugin:
                                     hum_status = 0
 
                                 # print(UnitLinked, dtypeLinked)
-                                Devices[UnitLinked].Update(nValue = int(value_humidity), sValue = '%s' %hum_status)
+                                Domoticz.Log("Device:{:20}    Board_id:{:5}    logic_io:{:5}    value:{}".format(device_type_linked, board_id, logic_io, value))
+                                Devices[UnitLinked].Update(nValue = int(value_humidity), sValue = '{}'.format(hum_status))
 
                     b.status[board_id]['io'][logic_io - 1] = value
                     Devices[Unit].Update(nValue = 0, sValue = sValue)
-                    Domoticz.Debug("Device:{}, Board_id:{}, logic_io:{}, value:{}".format(dtype, board_id, logic_io, value))
-
+            
             elif dtype == 'Temp+Hum+Baro':
                 hum_stat = 0
                 if value[1] >= 70: hum_stat = 3
@@ -390,7 +398,6 @@ class BasePlugin:
                 # print("Unit in devices", dtype, Unit, sValue)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
-                Domoticz.Debug("Device:{}, Board_id:{}, logic_io:{}, value:{}".format(dtype, board_id, logic_io, value))
                 
             elif dtype == 'Temp+Hum':
                 # value = b.calculate(board_id, logic_io, value)
@@ -418,29 +425,40 @@ class BasePlugin:
                 # print("Unit in devices", dtype, Unit, sValue)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
-                Domoticz.Debug("Device:{}, Board_id:{}, logic_io:{}, value:{}".format(dtype, board_id, logic_io, value))
             
             elif dtype == 'Counter Incremental':
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
-                Domoticz.Debug("Device:{}, Board_id:{}, logic_io:{}, value:{}".format(dtype, board_id, logic_io, value))
             
             elif dtype == "kWh":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 # str(en_0)+";"+str(en_1 * 1000)
-                Devices[Unit].Update(nValue = 0, sValue = "%s;%s" %(value, 0)) 
+                Devices[Unit].Update(nValue=0, sValue="{};{}".format(value, value))
                 
-            elif dtype == "Counter":
+            elif dtype == "Counter Incremental":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = value, sValue = str(value))     
-
+                Devices[Unit].Update(nValue = value, sValue = str(value))   
+            
+            elif dtype == "Current (Single)":
+                # value = b.calculate(board_id, logic_io, value)
+                b.status[board_id]['io'][logic_io - 1] = value
+                Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10)) 
+            
             elif dtype == "Custom Sensor":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value), sValue = str(value)) 
+                Devices[Unit].Update(nValue = int(value), sValue="{}".format(value)) 
+            
+            elif dtype == "Current/Ampere": # Triphase
+                pass
+            else:
+                # Current (Single)
+                Domoticz.Log("Device DTYPE non MAPPATO / ERRATO: {:20}    Board_id: {:5}    logic_io: {:5}    value: {}".format(dtype, board_id, logic_io, value))    
+            
+            Domoticz.Log("Device: {:20}    Board_id: {:5}    logic_io: {:5}    value: {}".format(dtype, board_id, logic_io, value))
 
     def onMessage(self, Connection, RXbytes):
         for d in RXbytes:
@@ -468,13 +486,13 @@ class BasePlugin:
             b.writeLog()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        pass
+        Domoticz.Log("{} {} {} {} {}".format("onNotification DL485-SERIAL plugin", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("onDisconnect called")
-        Domoticz.Log("Plugin DL485 Disconnected")
-
+        Domoticz.Log("{} {} {}".format("onDisconnect DL485-SERIAL plugin", self, Connection))
+        
     def onHeartbeat(self):
+        # Domoticz.Log("{} {}".format("onHeartbeat DL485-SERIAL plugin", self))
         return 1
 
 
