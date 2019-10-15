@@ -142,7 +142,7 @@ class BasePlugin:
                 io_enable = b.mapiotype[board_id][logic_io]['enable']
                 device_enable = board_enable & io_enable             
                 device_type = b.mapiotype[board_id][logic_io]['device_type']    
-                print(device_type)
+                # print(device_type)
                 if device_type in ['DIGITAL_IN_PULLUP', 'DIGITAL_IN']:
                     image = 9
                 elif device_type in ['DIGITAL_OUT']:
