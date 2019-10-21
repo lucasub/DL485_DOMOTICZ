@@ -141,7 +141,8 @@ class BasePlugin:
                 board_enable = b.mapiotype[board_id][logic_io]['board_enable']
                 io_enable = b.mapiotype[board_id][logic_io]['enable']
                 device_enable = board_enable & io_enable             
-                device_type = b.mapiotype[board_id][logic_io]['device_type']    
+                device_type = b.mapiotype[board_id][logic_io]['device_type']
+                overwrite_text = b.mapiotype[board_id][logic_io]['overwrite_text'] # if 1 overtwrite text name and description with config.json
                 # print(device_type)
                 if device_type in ['DIGITAL_IN_PULLUP', 'DIGITAL_IN']:
                     image = 9
@@ -161,6 +162,8 @@ class BasePlugin:
 
                 if dtype not in self.typeName:
                     Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
+
+                print(">>>>>>>>>>>>>>><DTYPE", dtype)
 
                 if DeviceID not in self.devices['DeviceID2Unit'].keys():
                     unit_present = list(self.devices['Unit2DeviceID'].keys())
@@ -187,6 +190,12 @@ class BasePlugin:
                     sValue = "0"
 
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
+
+                if not overwrite_text and Devices[Unit].Description != description:  # check if Domoticz description is equal to config description
+                    description = Devices[Unit].Description
+                
+                if not overwrite_text and Devices[Unit].Name != name:  # check if Domoticz description is equal to config description
+                    name = Devices[Unit].Name
 
                 Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=device_enable)
                 Domoticz.Log("Udate Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
