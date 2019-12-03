@@ -387,6 +387,8 @@ class BasePlugin:
                     Devices[Unit].Update(nValue = 0, sValue = sValue)
             
             elif dtype == 'Temp+Hum+Baro':
+                if not value:
+                    return
                 hum_stat = 0
                 if value[1] >= 70: hum_stat = 3
                 elif value[1] <= 30: hum_stat = 2
