@@ -108,6 +108,7 @@ class BasePlugin:
             "Waterflow",
             "Wind",
             "Wind+Temp+Chill",
+            "None",
         ]
 
 
@@ -188,6 +189,9 @@ class BasePlugin:
                     sValue = "0"
                 elif dtype == 'Counter Incremental': # mostra i Watt/ora
                     sValue = "0"
+                elif dtype == 'None':
+                    print("Device che non deve essere aggiunto a Domoticz")
+                    continue
 
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
 
@@ -464,6 +468,8 @@ class BasePlugin:
                 Devices[Unit].Update(nValue = int(value), sValue="{}".format(value)) 
             
             elif dtype == "Current/Ampere": # Triphase
+                pass
+            elif dtype == "None":
                 pass
             else:
                 # Current (Single)
