@@ -30,7 +30,7 @@ config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # Fil
 logstate = 1
 b = Bus(config_file_name, logstate)  # Istanza la classe Bus
 # log = Log()  # Istanza la classe Log
-DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati 
+DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
 # Configurazione SCHEDE
 # msg = b.resetEE(1, 0)  # Board_id, logic_io. Se logic_io=0, resetta tutti gli IO
 # print(msg)
@@ -67,9 +67,9 @@ class BasePlugin:
             'Unit2DeviceID': {},
             'DeviceID2Unit': {},
         } # DICT with all devices
-        
+
         # print("------------", dir)
-        
+
         self.typeName = [
             "Air Quality",
             "Alert",
@@ -130,18 +130,18 @@ class BasePlugin:
         self.debug = int(Parameters["Mode6"])
         Domoticz.Debugging(self.debug)
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
-        
+
         for d in Devices:
             print(Devices[d])
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
         # print(self.devices)
-        
+
         for board_id in b.mapiotype:
             for logic_io in b.mapiotype[board_id]:
                 board_enable = b.mapiotype[board_id][logic_io]['board_enable']
                 io_enable = b.mapiotype[board_id][logic_io]['enable']
-                device_enable = board_enable & io_enable             
+                device_enable = board_enable & io_enable
                 device_type = b.mapiotype[board_id][logic_io]['device_type']
                 overwrite_text = b.mapiotype[board_id][logic_io]['overwrite_text'] # if 1 overtwrite text name and description with config.json
                 # print(device_type)
@@ -151,19 +151,21 @@ class BasePlugin:
                     image = 0
                 else:
                     image = 0
-                
+
                 DeviceID = "%s-%s" % (board_id, logic_io)
-                
+
                 name = "[%s] %s" % (DeviceID, b.mapiotype[board_id][logic_io]['name'])
                 description = b.mapiotype[board_id][logic_io]['description']
                 dtype = b.mapiotype[board_id][logic_io]['dtype']
                 device_enable = b.mapiotype[board_id][logic_io]['enable']
-                
+
                 # print("*** BID:{} IOID:{} - logic_io:{} Board_enable:{} - Domoticz Device ENABLE:{} - DeviceID:{}".format(board_id, board_enable, logic_io, io_enable, device_enable, DeviceID))
 
                 if dtype not in self.typeName:
                     Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
 
+                if dtype == "None":
+                    continue
                 print(">>>>>>>>>>>>>>><DTYPE", dtype)
 
                 if DeviceID not in self.devices['DeviceID2Unit'].keys():
@@ -197,7 +199,7 @@ class BasePlugin:
 
                 if not overwrite_text and Devices[Unit].Description != description:  # check if Domoticz description is equal to config description
                     description = Devices[Unit].Description
-                
+
                 if not overwrite_text and Devices[Unit].Name != name:  # check if Domoticz description is equal to config description
                     name = Devices[Unit].Name
 
@@ -233,15 +235,15 @@ class BasePlugin:
             return
 
         DeviceID = '%s-%s' %(board_id, logic_io)
-        
-        if not DeviceID in self.devices['DeviceID2Unit']: 
+
+        if not DeviceID in self.devices['DeviceID2Unit']:
             # pprint(self.devices)
-            print("CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ:", DeviceID)    
+            print("CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ:", DeviceID)
             return
 
         Unit = self.devices['DeviceID2Unit'][DeviceID]
         dtype = b.mapiotype[board_id][logic_io]['dtype']
-        
+
         # print("==>>dtype: {:<15} board_id: {:<5} logic_io: {:<5} value: {}".format(dtype, board_id, logic_io, value))
 
         if (Unit in Devices):
@@ -259,13 +261,13 @@ class BasePlugin:
                 # value = b.make_inverted(board_id, logic_io, value[0] & 1)  # Inverte l'IO se definito sul file di configurazione
                 # b.status[board_id]['io'][logic_io - 1] = value
 
-                
+
                 sValue = 'On' if value & 1 == 1 else 'Off'
-                
+
                 Devices[Unit].Update(nValue=value&1, sValue=sValue)
-                
+
                 linked_proc = b.mapproc[DeviceID] if DeviceID in b.mapproc else {}
-                
+
                 plc_function = b.mapiotype[board_id][logic_io]['plc_function']
 
                 if linked_proc and plc_function == 'disable' and 1==2: # Da rifare perché non FUNZIONA
@@ -288,7 +290,7 @@ class BasePlugin:
                         x_logic_io = int(x_outa[1])
 
                         app_linked_proc = linked_proc["%s-%s" %(x_outa[0], x_outa[1])]['linked_proc']
-                        
+
                         if app_linked_proc == 'toggle':
                             if x_value & 0b100:
                                 value = b.status[x_board_id]['io'][x_logic_io - 1]
@@ -352,7 +354,7 @@ class BasePlugin:
                 sValue = str(value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue = sValue)
-            
+
             elif dtype == 'Temperature':
                 if value:
                     sValue = str(value)
@@ -365,20 +367,20 @@ class BasePlugin:
                         device_type_linked = b.mapiotype[board_id_linked][logic_io_linked]['device_type']
                         if device_type_linked =="PSYCHROMETER":
                             value_humidity = b.status[board_id_linked]['io'][logic_io_linked - 1]
-                            
-                            if value_humidity:    
+
+                            if value_humidity:
                                 DeviceIDLinked = '%s-%s' %(board_id_linked, logic_io_linked)
                                 if DeviceIDLinked not in self.devices['DeviceID2Unit']: return
 
                                 # print(">>>>>>>>>>>>>>>>>>>>>>PSYCHROMETER DEVICE:", DeviceIDLinked)
                                 UnitLinked = self.devices['DeviceID2Unit'][DeviceIDLinked]
-                                
+
                                 dtypeLinked = b.mapiotype[board_id_linked][logic_io_linked]['dtype']
                                 if value_humidity < 40:
                                     hum_status = 2
                                 elif value_humidity >=45 and value_humidity < 56:
                                     hum_status = 1
-                                elif value_humidity >=60:                                    
+                                elif value_humidity >=60:
                                     hum_status = 3
                                 else:
                                     hum_status = 0
@@ -389,7 +391,7 @@ class BasePlugin:
 
                     b.status[board_id]['io'][logic_io - 1] = value
                     Devices[Unit].Update(nValue = 0, sValue = sValue)
-            
+
             elif dtype == 'Temp+Hum+Baro':
                 if not value:
                     return
@@ -413,7 +415,7 @@ class BasePlugin:
                 # print("Unit in devices", dtype, Unit, sValue)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
-                
+
             elif dtype == 'Temp+Hum':
                 # value = b.calculate(board_id, logic_io, value)
                 # print("TEMPERATURA AM2320", board_id, logic_io, value)
@@ -440,66 +442,66 @@ class BasePlugin:
                 # print("Unit in devices", dtype, Unit, sValue)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
-            
+
             elif dtype == 'Counter Incremental':
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
-            
+
             elif dtype == "kWh":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 # str(en_0)+";"+str(en_1 * 1000)
                 Devices[Unit].Update(nValue=0, sValue="{};{}".format(value, value))
-                
+
             elif dtype == "Counter Incremental":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = value, sValue = str(value))   
-            
+                Devices[Unit].Update(nValue = value, sValue = str(value))
+
             elif dtype == "Current (Single)":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10)) 
-            
+                Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10))
+
             elif dtype == "Custom Sensor":
                 # value = b.calculate(board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value), sValue="{}".format(value)) 
-            
+                Devices[Unit].Update(nValue = int(value), sValue="{}".format(value))
+
             elif dtype == "Current/Ampere": # Triphase
                 pass
             elif dtype == "None":
                 pass
             else:
                 # Current (Single)
-                Domoticz.Log("Device DTYPE non MAPPATO / ERRATO: {:20}    Board_id: {:5}    logic_io: {:5}    value: {}".format(dtype, board_id, logic_io, value))    
-            
+                Domoticz.Log("Device DTYPE non MAPPATO / ERRATO: {:20}    Board_id: {:5}    logic_io: {:5}    value: {}".format(dtype, board_id, logic_io, value))
+
             Domoticz.Log("Device: {:20}    Board_id: {:5}    logic_io: {:5}    value: {}".format(dtype, board_id, logic_io, value))
 
     def onMessage(self, Connection, RXbytes):
         for d in RXbytes:
             b.RXtrama = b.readSerial(d)
-            
-            if not b.RXtrama: 
+
+            if not b.RXtrama:
                 continue
-            
+
             b.arrivatatrama()
-                        
+
             # print(b.RXtrama) # Non togliere altrimenti non funziona
             if len(b.RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
                 print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
                 # if (b.RXtrama[1] & 0xDF) in b.code: # comando valido o feedback a comando valido
-                
+
                 if b.RXtrama[1] & 0xDF == b.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
                     # print("onMessage>>>", b.RXtrama)
-                    
+
                     value = b.calculate(b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
                     self.updateIO(b.RXtrama[0], b.RXtrama[2], value)  # Aggiorna DOMOTICZ
-                        
+
                     # print("VALUE CALCULATE:", b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:], value)
 
-                
+
             b.writeLog()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
@@ -507,7 +509,7 @@ class BasePlugin:
 
     def onDisconnect(self, Connection):
         Domoticz.Log("{} {} {}".format("onDisconnect DL485-SERIAL plugin", self, Connection))
-        
+
     def onHeartbeat(self):
         # Domoticz.Log("{} {}".format("onHeartbeat DL485-SERIAL plugin", self))
         return 1
