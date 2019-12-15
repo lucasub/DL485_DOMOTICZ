@@ -351,9 +351,12 @@ class BasePlugin:
                             b.TXmsg.append(msg)
 
             elif dtype == 'Voltage':
-                sValue = str(value)
-                b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value), sValue = sValue)
+                # sValue = str(value)
+                Devices[Unit].Update(nValue = int(value), sValue = str(value))
+
+            elif dtype == 'Illumination':
+                # b.status[board_id]['io'][logic_io - 1] = value
+                Devices[Unit].Update(nValue = value, sValue = str(value))
 
             elif dtype == 'Temperature':
                 if value:
@@ -389,7 +392,7 @@ class BasePlugin:
                                 Domoticz.Log("Device:{:20}    Board_id:{:5}    logic_io:{:5}    value:{}".format(device_type_linked, board_id, logic_io, value))
                                 Devices[UnitLinked].Update(nValue = int(value_humidity), sValue = '{}'.format(hum_status))
 
-                    b.status[board_id]['io'][logic_io - 1] = value
+                    # b.status[board_id]['io'][logic_io - 1] = value
                     Devices[Unit].Update(nValue = 0, sValue = sValue)
 
             elif dtype == 'Temp+Hum+Baro':
@@ -413,7 +416,7 @@ class BasePlugin:
 
                 sValue = "{};{};{};{};{}".format(value[0], value[1], hum_stat, value[2], weather_prediction)
                 # print("Unit in devices", dtype, Unit, sValue)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
 
             elif dtype == 'Temp+Hum':
@@ -440,33 +443,33 @@ class BasePlugin:
 
                 sValue = "{};{};{}".format(value[0], value[1], hum_stat)
                 # print("Unit in devices", dtype, Unit, sValue)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue=0, sValue=sValue)
 
             elif dtype == 'Counter Incremental':
                 # value = b.calculate(board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
 
             elif dtype == "kWh":
                 # value = b.calculate(board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 # str(en_0)+";"+str(en_1 * 1000)
                 Devices[Unit].Update(nValue=0, sValue="{};{}".format(value, value))
 
             elif dtype == "Counter Incremental":
                 # value = b.calculate(board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value, sValue = str(value))
 
             elif dtype == "Current (Single)":
                 # value = b.calculate(board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10))
 
             elif dtype == "Custom Sensor":
                 # value = b.calculate(board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
+                # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue="{}".format(value))
 
             elif dtype == "Current/Ampere": # Triphase
