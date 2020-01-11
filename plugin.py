@@ -375,7 +375,7 @@ class BasePlugin:
                                 # print(">>>>>>>>>>>>>>>>>>>>>>PSYCHROMETER DEVICE:", DeviceIDLinked)
                                 UnitLinked = self.devices['DeviceID2Unit'][DeviceIDLinked]
 
-                                dtypeLinked = b.mapiotype[board_id_linked][logic_io_linked]['dtype']
+                                # dtypeLinked = b.mapiotype[board_id_linked][logic_io_linked]['dtype']
                                 if value_humidity < 40:
                                     hum_status = 2
                                 elif value_humidity >=45 and value_humidity < 56:
@@ -509,7 +509,7 @@ class BasePlugin:
             b.writeLog()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        Domoticz.Log("{} {} {} {} {}".format("onNotification DL485-SERIAL plugin", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
+        Domoticz.Log("{} {} {} {} {} {} {} {} {}".format("onNotification DL485-SERIAL plugin", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
 
     def onDisconnect(self, Connection):
         Domoticz.Log("{} {} {}".format("onDisconnect DL485-SERIAL plugin", self, Connection))
