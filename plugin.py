@@ -27,7 +27,7 @@ from dl485 import Bus, Log
 
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
-logstate = 1
+logstate = 0
 b = Bus(config_file_name, logstate)  # Istanza la classe Bus
 # log = Log()  # Istanza la classe Log
 DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
