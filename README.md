@@ -1,17 +1,43 @@
+# ITALIANO
+
 # Domocontrol DL485 - Plugin per Domoticz
 Plugin in Python3 per la gestione e il controllo delle board per domotica della serie DL485
 
 ## Installazione 
 
-1. Clonare il plugin dentro l'apposita cartella Domoticz
+1. Aggiornare e Installare i seguenti pacchetti da terminale:
+```
+sudo apt update
+sudo apt upgrade
+sudo apt install python3-dev python3-serial
+```
+
+2. Installare la libreria DL485_BUS
+```
+cd /home/pi/
+git clone https://github.com/lucasub/DL485_BUS.git DL485_BUS
+```
+
+3. Modificare il file di configurazione config.json secondo le proprie esigenze
+```
+cd DL485_BUS
+nano config.json
+```
+
+3. Clonare il plugin dentro l'apposita cartella Domoticz
 ```
 cd /home/pi/domoticz/plugins
 git clone https://github.com/lucasub/DL485_DOMOTICZ.git DL485_DOMOTICZ
 ```
-2. Riavviare domoticz
-3. Dal menu "Configurazione->Hardware" selezionare il plugin "DL board plaugin" dalla tendina Modello
+4. Riavviare domoticz tramite riavvia il sistema Configurazione->Più opzioni->Riavvia il sistema
+5. Dal menu "Configurazione->Hardware" selezionare il plugin "DL board plaugin" dalla tendina Modello
+<img src="document/image/DL485_DOMOTICZ_A.png" width="50%" style="float:left;" />
+
 4. Dare un nome al plugin tramite la casella di testo "Nome"
 5. Premere il tasto "Aggiungi"
+<img src="document/image/DL485_DOMOTICZ_B.png" width="50%" style="float:left;" />
+
+6. Il Plugin creerà tutti i dispositivi come da file di configurazione config.json presente nella cartella /home/pi/DL485_BUS
 
 ## Aggiornamento Plugin
 
