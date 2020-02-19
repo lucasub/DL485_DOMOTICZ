@@ -139,14 +139,24 @@ class BasePlugin:
             if "BOARD" in k:
                 if b.config[k]['GENERAL_BOARD']['enable'] == 1:
                     print("BOARD::", b.config[k]['GENERAL_BOARD']['enable'])  
-                    """ Da Fare """  
-                    # Domoticz.Device(Name=name, Unit=k, TypeName='Text', Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
-                    # Devices[k].Update(Name=name, TypeName='Text', Description=description, nValue=value, sValue=sValue, Used=device_enable)
-                    # Domoticz.Log("Update Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
-
+                    
         for board_id in b.mapiotype:
-            # Device_board_characteristics = "{}-BC".format(board_id)
+            
+            # pprint(self.devices)
+            
+            # Creazione dispositivi TEXT per ciascuna Board per inserire le caratteristiche del nodo
+            Device_board_characteristics = "{}-0".format(board_id)
             # print("Device_board_characteristics", Device_board_characteristics)
+            if Device_board_characteristics not in self.devices['DeviceID2Unit'].keys():
+                unit_present = list(self.devices['Unit2DeviceID'].keys())
+                Unit = self.unitPresent(unit_present)
+                name = 'BOARD{} CHARACTERISTICS'.format(board_id)
+                dtype = 'Text'
+                description = "Caratteristiche della Board {}".format(board_id)
+                # print("Device_board_characteristics", Device_board_characteristics, unit_present, Unit, name, dtype, description)
+                Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=Device_board_characteristics, Used=True, Image=0).Create()
+                self.devices['Unit2DeviceID'][Unit] = Device_board_characteristics
+                self.devices['DeviceID2Unit'][Device_board_characteristics] = Unit
 
             for logic_io in b.mapiotype[board_id]:
                 board_enable = b.mapiotype[board_id][logic_io]['board_enable']
@@ -164,7 +174,6 @@ class BasePlugin:
 
                 DeviceID = "{}-{}".format(board_id, logic_io)
                 
-
                 name = "[{}] {}".format(DeviceID, b.mapiotype[board_id][logic_io]['name'])
                 description = b.mapiotype[board_id][logic_io]['description']
                 dtype = b.mapiotype[board_id][logic_io]['dtype']
@@ -225,7 +234,8 @@ class BasePlugin:
         b.Connection.Connect()
 
         configuration = b.getConfiguration()  # Set configuration of boards
-        b.TXmsg = configuration # Mette trama configurazione in lista da inviare
+        # b.TXmsg = configuration # Mette trama configurazione in lista da inviare
+        b.TXmsg += [b.getBoardType(0)] # Request GetTypeBoard Informations
         
 
     def onStop(self):
@@ -233,8 +243,6 @@ class BasePlugin:
 
     def onConnect(self, Connection, Status, Description):
         Domoticz.Log("{} {} {} {} {}".format("onConnect DL485-SERIAL plugin", self, Connection, Status, Description))
-
-
 
     def updateIO(self, board_id, logic_io, value):
         """
@@ -487,13 +495,17 @@ class BasePlugin:
 
             elif dtype == "Current/Ampere": # Triphase
                 pass
+            
+            elif dtype == "Text": # Triphase
+                print("DEVICE TEXT ancora da fare", board_id, logic_io, value)
+            
             elif dtype == "None":
-                pass
-            else:
-                # Current (Single)
-                Domoticz.Log("{}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(board_id, logic_io, value, dtype))
+                print("DEVICE None ancora da fare", board_id, logic_io, value)
 
-            Domoticz.Log("{}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
+            else:
+                Domoticz.Log("{             DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(b.nowtime, board_id, logic_io, value, dtype))
+
+            Domoticz.Log("  {}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
 
     def onCommand(self, Unit, Command, Level, Hue):
         # print("onCommand", Unit, Command, Level, Hue)
@@ -512,9 +524,23 @@ class BasePlugin:
 
             b.arrivatatrama()
 
-            # if len(b.RXtrama)>1 and b.RXtrama[1] == 12 | 32: # Risposta con infomrazioni delle varie Board
-            #     print("====>>>>", b.RXtrama)
-            #     print(b.get_board_type)
+            if len(b.RXtrama)>1 and b.RXtrama[1] == b.code['CR_GET_BOARD_TYPE'] | 32: # Risposta con infomrazioni delle varie Board
+                board_id = b.RXtrama[0]
+                
+                msg = "Configurazione della BOARD{}:\n".format(board_id)
+                msg += 'Board Type: {}\n'.format(b.get_board_type[board_id]['board_type'])
+                msg += 'Data Firmware: {}\n'.format(b.get_board_type[board_id]['data_firmware'])
+                msg += 'I/O Numbers: {}\n'.format(b.get_board_type[board_id]['io_number'])
+                msg += 'I2C: {}\n'.format(b.get_board_type[board_id]['i2c'])
+                msg += 'One Wire: {}\n'.format(b.get_board_type[board_id]['onewire'])
+                msg += 'PLC: {}\n'.format(b.get_board_type[board_id]['plc'])
+                msg += 'Power On: {}\n'.format(b.get_board_type[board_id]['power_on'])
+                msg += 'PWM: {}\n'.format(b.get_board_type[board_id]['pwm'])
+                msg += 'RFID: {}\n'.format(b.get_board_type[board_id]['rfid'])
+                msg += 'PRO: {}\n'.format(b.get_board_type[board_id]['protection'])
+
+                Unit = self.devices['DeviceID2Unit']["{}-0".format(b.RXtrama[0])]
+                Devices[Unit].Update(nValue=1, sValue=msg)
                 
                 # Devices[Unit].Update(nValue = 0, sValue = sValue)
 
