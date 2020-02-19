@@ -27,7 +27,7 @@ from dl485 import Bus, Log
 
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
-logstate = 0
+logstate = 2 # Abilita la stampa del DEBUG: 1==scrivi su log, 2==stampa a video
 b = Bus(config_file_name, logstate)  # Istanza la classe Bus
 # log = Log()  # Istanza la classe Log
 DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
@@ -61,14 +61,10 @@ Image:
 class BasePlugin:
     def __init__(self):
         self.debug = 0
-        configuration = b.getConfiguration()  # Set configuration of boards
-        b.TXmsg = configuration # Mette trama configurazione in lista da inviare
-        self.devices = {
+        self.devices = { # DICT with all devices
             'Unit2DeviceID': {},
             'DeviceID2Unit': {},
-        } # DICT with all devices
-
-        # print("------------", dir)
+        } 
 
         self.typeName = [
             "Air Quality",
@@ -111,6 +107,9 @@ class BasePlugin:
             "None",
         ]
 
+        b.system = 'Domoticz' # Indica alla classe chi la stà istanziando
+
+        b.TXmsg = [b.getBoardType(0)] # Chiede ai nodi di inviare in rete le loro caratteristiche
 
     def unitPresent(self, listUnit):
         """
@@ -132,19 +131,30 @@ class BasePlugin:
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
 
         for d in Devices:
-            print(Devices[d])
+            print("DEVICES:", Devices[d])
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
-        # print(self.devices)
+
+        for k in b.config.keys(): # Per Board Type descriptions
+            if "BOARD" in k:
+                if b.config[k]['GENERAL_BOARD']['enable'] == 1:
+                    print("BOARD::", b.config[k]['GENERAL_BOARD']['enable'])  
+                    """ Da Fare """  
+                    # Domoticz.Device(Name=name, Unit=k, TypeName='Text', Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
+                    # Devices[k].Update(Name=name, TypeName='Text', Description=description, nValue=value, sValue=sValue, Used=device_enable)
+                    # Domoticz.Log("Update Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
 
         for board_id in b.mapiotype:
+            # Device_board_characteristics = "{}-BC".format(board_id)
+            # print("Device_board_characteristics", Device_board_characteristics)
+
             for logic_io in b.mapiotype[board_id]:
                 board_enable = b.mapiotype[board_id][logic_io]['board_enable']
                 io_enable = b.mapiotype[board_id][logic_io]['enable']
                 device_enable = board_enable & io_enable
                 device_type = b.mapiotype[board_id][logic_io]['device_type']
                 overwrite_text = b.mapiotype[board_id][logic_io]['overwrite_text'] # if 1 overtwrite text name and description with config.json
-                # print(device_type)
+                # print("DeviceType:", device_type)
                 if device_type in ['DIGITAL_IN_PULLUP', 'DIGITAL_IN']:
                     image = 9
                 elif device_type in ['DIGITAL_OUT']:
@@ -152,9 +162,10 @@ class BasePlugin:
                 else:
                     image = 0
 
-                DeviceID = "%s-%s" % (board_id, logic_io)
+                DeviceID = "{}-{}".format(board_id, logic_io)
+                
 
-                name = "[%s] %s" % (DeviceID, b.mapiotype[board_id][logic_io]['name'])
+                name = "[{}] {}".format(DeviceID, b.mapiotype[board_id][logic_io]['name'])
                 description = b.mapiotype[board_id][logic_io]['description']
                 dtype = b.mapiotype[board_id][logic_io]['dtype']
                 device_enable = b.mapiotype[board_id][logic_io]['enable']
@@ -204,11 +215,18 @@ class BasePlugin:
                     name = Devices[Unit].Name
 
                 Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=device_enable)
-                Domoticz.Log("Udate Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
+                Domoticz.Log("Update Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
 
         # self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = Parameters["SerialPort"], Baud = int(Parameters["Mode3"]))
-        self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
-        self.SerialConn.Connect()
+        # self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
+        b.Connection = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
+        
+        # self.SerialConn.Connect()
+        b.Connection.Connect()
+
+        configuration = b.getConfiguration()  # Set configuration of boards
+        b.TXmsg = configuration # Mette trama configurazione in lista da inviare
+        
 
     def onStop(self):
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
@@ -216,14 +234,7 @@ class BasePlugin:
     def onConnect(self, Connection, Status, Description):
         Domoticz.Log("{} {} {} {} {}".format("onConnect DL485-SERIAL plugin", self, Connection, Status, Description))
 
-    def onCommand(self, Unit, Command, Level, Hue):
-        # print("onCommand", Unit, Command, Level, Hue)
-        bio = Devices[Unit].DeviceID.split("-")
-        board_id = int(bio[0])
-        logic_io = int(bio[1])
-        value = 1 if Command == 'On' else 0
-        msg = b.writeIO(board_id, logic_io, [value])
-        b.TXmsg.append(msg)
+
 
     def updateIO(self, board_id, logic_io, value):
         """
@@ -350,6 +361,7 @@ class BasePlugin:
                             msg = b.writeIO(x_board_id, x_logic_io, [value])
                             b.TXmsg.append(msg)
 
+            
             elif dtype == 'Voltage':
                 sValue = str(value)
                 b.status[board_id]['io'][logic_io - 1] = value
@@ -483,28 +495,48 @@ class BasePlugin:
 
             Domoticz.Log("{}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
 
+    def onCommand(self, Unit, Command, Level, Hue):
+        # print("onCommand", Unit, Command, Level, Hue)
+        bio = Devices[Unit].DeviceID.split("-")
+        board_id = int(bio[0])
+        logic_io = int(bio[1])
+        value = 1 if Command == 'On' else 0
+        msg = b.writeIO(board_id, logic_io, [value])
+        b.TXmsg.append(msg)
+
     def onMessage(self, Connection, RXbytes):
         for d in RXbytes:
             b.RXtrama = b.readSerial(d)
 
-            if not b.RXtrama:
-                continue
+            if not b.RXtrama: continue
 
             b.arrivatatrama()
 
+            # if len(b.RXtrama)>1 and b.RXtrama[1] == 12 | 32: # Risposta con infomrazioni delle varie Board
+            #     print("====>>>>", b.RXtrama)
+            #     print(b.get_board_type)
+                
+                # Devices[Unit].Update(nValue = 0, sValue = sValue)
+
             # print(b.RXtrama) # Non togliere altrimenti non funziona
-            if len(b.RXtrama) > 1:  # Mosra solo comunicazioni valide (senza PING)
-                print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
+            if len(b.RXtrama) > 1:  # ERA 1 Mosra solo comunicazioni valide (senza PING)
+                # print("Trama arrivata:", b.RXtrama, b.int2hex(b.RXtrama))
                 # if (b.RXtrama[1] & 0xDF) in b.code: # comando valido o feedback a comando valido
 
-                if b.RXtrama[1] & 0xDF == b.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
+                # if b.RXtrama[1] & 0xDF == b.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
+                if b.RXtrama[1] in [ b.code['COMUNICA_IO'], b.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA                    
                     # print("onMessage>>>", b.RXtrama)
-
-                    value = b.calculate(b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
+                    value = b.calculate(b.RXtrama[0], b.RXtrama[1], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
+                    # print("VALUE::", value)
                     self.updateIO(b.RXtrama[0], b.RXtrama[2], value)  # Aggiorna DOMOTICZ
 
                     # print("VALUE CALCULATE:", b.RXtrama[0], b.RXtrama[2], b.RXtrama[3:], value)
-
+                elif b.RXtrama[1] == b.code['CR_GET_BOARD_TYPE'] | 32:
+                    # print("===>>>>> GET BOARD ID", b.getBoardType)
+                    pass
+                else:
+                    pass
+                    print("{:<7}  NO COMUNICA IO         {}".format(b.nowtime, b.RXtrama))
 
             b.writeLog()
 
