@@ -25,6 +25,10 @@ from pprint import pprint
 import json
 from dl485 import Bus, Log
 
+# import threading
+# import queue
+
+
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
 logstate = 2 # Abilita la stampa del DEBUG: 1==scrivi su log, 2==stampa a video
@@ -36,6 +40,7 @@ DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
 # print(msg)
 # b.TXmsg += msg
 # b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
+
 
 """
 Image:
@@ -60,6 +65,9 @@ Image:
 """ LOOP """
 class BasePlugin:
     def __init__(self):
+        # self.messageQueue = queue.Queue()
+        # self.messageThread = threading.Thread(name="QueueThread", target=BasePlugin.handleMessage, args=(self,))
+
         self.debug = 0
         self.devices = { # DICT with all devices
             'Unit2DeviceID': {},
@@ -109,7 +117,7 @@ class BasePlugin:
 
         b.system = 'Domoticz' # Indica alla classe chi la stà istanziando
 
-        b.TXmsg = [b.getBoardType(0)] # Chiede ai nodi di inviare in rete le loro caratteristiche
+        # b.TXmsg = [b.getBoardType(0)] # Chiede ai nodi di inviare in rete le loro caratteristiche
 
     def unitPresent(self, listUnit):
         """
@@ -128,6 +136,11 @@ class BasePlugin:
     def onStart(self):
         self.debug = int(Parameters["Mode6"])
         Domoticz.Debugging(self.debug)
+
+        Domoticz.Log("Debugger started, use 'telnet 0.0.0.0 4444' to connect")
+        # import rpdb
+        # rpdb.set_trace()
+
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
 
         for d in Devices:
@@ -233,12 +246,15 @@ class BasePlugin:
         # self.SerialConn.Connect()
         b.Connection.Connect()
 
-        configuration = b.getConfiguration()  # Set configuration of boards
+        # configuration = b.getConfiguration()  # Set configuration of boards
         # b.TXmsg = configuration # Mette trama configurazione in lista da inviare
-        b.TXmsg += [b.getBoardType(0)] # Request GetTypeBoard Informations
+        # b.TXmsg += [b.getBoardType(0)] # Request GetTypeBoard Informations
         
 
     def onStop(self):
+        # for thread in threading.enumerate():
+        #     print("------------------", thread)
+
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
     def onConnect(self, Connection, Status, Description):
@@ -562,7 +578,7 @@ class BasePlugin:
                     pass
                 else:
                     pass
-                    print("{:<7}  NO COMUNICA IO         {}".format(b.nowtime, b.RXtrama))
+                    # print("{:<7}  NO COMUNICA IO         {}".format(b.nowtime, b.RXtrama))
 
             b.writeLog()
 
