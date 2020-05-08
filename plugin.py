@@ -252,8 +252,10 @@ class BasePlugin:
         
 
     def onStop(self):
-        # for thread in threading.enumerate():
-        #     print("------------------", thread)
+
+        if b.telegram_enable: # Telegram is activated
+            pass # To do
+
 
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
@@ -643,18 +645,5 @@ def UpdateDevice(Unit, nValue, sValue):
             Devices[Unit].Update(nValue, str(sValue))
     return
 
-
-# Generic helper functions
 def DumpConfigToLog():
-    # for x in Parameters:
-    #     if Parameters[x] != "":
-    #         Domoticz.Debug( "'" + x + "':'" + str(Parameters[x]) + "'")
-    # Domoticz.Debug("Device count: " + str(len(Devices)))
-    # for x in Devices:
-    #     Domoticz.Debug("Device:           " + str(x) + " - " + str(Devices[x]))
-    #     Domoticz.Debug("Device ID:       '" + str(Devices[x].ID) + "'")
-    #     Domoticz.Debug("Device Name:     '" + Devices[x].Name + "'")
-    #     Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
-    #     Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
-    #     Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
     return
