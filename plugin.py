@@ -85,6 +85,7 @@ class BasePlugin:
             "Custom",
             "Dimmer",
             "Distance",
+            "Electric",
             "Gas",
             "Humidity",
             "Illumination",
@@ -136,31 +137,24 @@ class BasePlugin:
     def onStart(self):
         self.debug = int(Parameters["Mode6"])
         Domoticz.Debugging(self.debug)
-
-        Domoticz.Log("Debugger started, use 'telnet 0.0.0.0 4444' to connect")
-        # import rpdb
-        # rpdb.set_trace()
-
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
-
         for d in Devices:
             print("DEVICES:", Devices[d])
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
-
+        
         for k in b.config.keys(): # Per Board Type descriptions
             if "BOARD" in k:
                 if b.config[k]['GENERAL_BOARD']['enable'] == 1:
                     print("BOARD::", b.config[k]['GENERAL_BOARD']['enable'])  
-                    
+        
         for board_id in b.mapiotype:
-            
-            # pprint(self.devices)
-            
             # Creazione dispositivi TEXT per ciascuna Board per inserire le caratteristiche del nodo
             Device_board_characteristics = "{}-0".format(board_id)
             # print("Device_board_characteristics", Device_board_characteristics)
             if Device_board_characteristics not in self.devices['DeviceID2Unit'].keys():
+                """ Add new Devices """    
+                print("********** CREATE DEVICE *********", self.devices['DeviceID2Unit'])
                 unit_present = list(self.devices['Unit2DeviceID'].keys())
                 Unit = self.unitPresent(unit_present)
                 name = 'BOARD{} CHARACTERISTICS'.format(board_id)
@@ -170,13 +164,14 @@ class BasePlugin:
                 Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=Device_board_characteristics, Used=True, Image=0).Create()
                 self.devices['Unit2DeviceID'][Unit] = Device_board_characteristics
                 self.devices['DeviceID2Unit'][Device_board_characteristics] = Unit
+            
 
             for logic_io in b.mapiotype[board_id]:
                 board_enable = b.mapiotype[board_id][logic_io]['board_enable']
                 io_enable = b.mapiotype[board_id][logic_io]['enable']
                 device_enable = board_enable & io_enable
                 device_type = b.mapiotype[board_id][logic_io]['device_type']
-                # print("DeviceType:", device_type)
+                print("DeviceType:", board_id, logic_io, board_enable, device_type)
                 if device_type in ['DIGITAL_IN_PULLUP', 'DIGITAL_IN']:
                     image = 9
                 elif device_type in ['DIGITAL_OUT']:
@@ -234,7 +229,7 @@ class BasePlugin:
 
                 if not b.overwrite_text and Devices[Unit].Name != name:  # check if Domoticz description is equal to config description
                     name = Devices[Unit].Name
-
+                print("-------------", DeviceID, dtype)
                 Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=device_enable)
                 Domoticz.Log("Update Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
 
@@ -485,9 +480,9 @@ class BasePlugin:
                 Devices[Unit].Update(nValue = value, sValue = str(value))
 
             elif dtype == 'Counter Incremental':
-                # value = b.calculate(board_id, logic_io, value)
+                # print("==>>>", board_id, logic_io, value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = value&1, sValue = str(value&1))
+                Devices[Unit].Update(nValue = int(value)&1, sValue = str(int(value)&1))
 
             elif dtype == "kWh":
                 # value = b.calculate(board_id, logic_io, value)
@@ -500,10 +495,13 @@ class BasePlugin:
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value, sValue = str(value))
 
-            elif dtype == "Current (Single)":
-                # value = b.calculate(board_id, logic_io, value)
+            elif dtype == "Current (Single)" or dtype == "Electric":
+                if not value:
+                    return 0
                 b.status[board_id]['io'][logic_io - 1] = value
+                
                 Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10))
+
 
             elif dtype == "Custom Sensor":
                 # value = b.calculate(board_id, logic_io, value)
@@ -520,6 +518,7 @@ class BasePlugin:
                 print("DEVICE None ancora da fare", board_id, logic_io, value)
 
             else:
+                # print(" NON MAPPATO ", board_id, logic_io, value, dtype)
                 Domoticz.Log("{             DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(b.nowtime, board_id, logic_io, value, dtype))
 
             Domoticz.Log("  {}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
@@ -555,6 +554,13 @@ class BasePlugin:
                 msg += 'PWM: {}\n'.format(b.get_board_type[board_id]['pwm'])
                 msg += 'RFID: {}\n'.format(b.get_board_type[board_id]['rfid'])
                 msg += 'PRO: {}\n'.format(b.get_board_type[board_id]['protection'])
+                
+
+                # pprint(b.get_board_type[board_id])
+                if len(b.get_board_type[board_id]) == 14: # Informazioni su nuove schede
+                    msg += 'RMS_POWER: {}\n'.format(b.get_board_type[board_id]['rms_power'])
+                    msg += 'N. ERROR CONFLICT: {}\n'.format(b.get_board_type[board_id]['error_conflict'])
+                    msg += 'N. ERROR IO: {}\n'.format(b.get_board_type[board_id]['error_logic_io_fisic_io'])
 
                 try:
                     Unit = self.devices['DeviceID2Unit']["{}-0".format(b.RXtrama[0])]
