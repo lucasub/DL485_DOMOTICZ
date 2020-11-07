@@ -74,47 +74,78 @@ class BasePlugin:
             'DeviceID2Unit': {},
         } 
 
-        self.typeName = [
-            "Air Quality",
-            "Alert",
-            "Barometer",
-            "Counter Incremental",
-            "Contact",
-            "Current/Ampere",
-            "Current (Single)",
-            "Custom",
-            "Dimmer",
-            "Distance",
-            "Electric",
-            "Gas",
-            "Humidity",
-            "Illumination",
-            "kWh",
-            "Leaf Wetness",
-            "Motion",
-            "Percentage",
-            "Push On",
-            "Push Off",
-            "Pressure",
-            "Rain",
-            "Selector Switch",
-            "Soil Moisture",
-            "Solar Radiation",
-            "Sound Level",
-            "Switch",
-            "Temperature",
-            "Temp+Hum",
-            "Temp+Hum+Baro",
-            "Text",
-            "Usage",
-            "UV",
-            "Visibility",
-            "Voltage",
-            "Waterflow",
-            "Wind",
-            "Wind+Temp+Chill",
-            "None",
-        ]
+        self.typeNameDict = {        
+            'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': 0},
+            'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': 0},
+            'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': 0},
+            'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': 0},
+            'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': 0},
+            'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': 0},
+            'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': 0},
+            'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': 0},
+            'Counter'                       : { 'Type': 113,        'SubType': 0,       'SwitchType': 0},
+            'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': 0},
+            'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': 0},
+            'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': 0},
+            'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': 0},
+            'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': 0},
+            'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': 0},
+            'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': 0},
+            'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': 0},
+            'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': 0},
+            'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': 0},
+            'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': 0},
+            'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': 0},
+            'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': 0},
+            'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': 0}, # General Voltage
+            'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': 0},
+            'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': 0}, # General Text
+            'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': 0},
+            'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': 0}, # General Ampere (1 Phase)
+            'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': 0},
+            'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': 0},
+            'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': 0},
+            'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': 0}, # General Counter Incremental
+            'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': 0}, # General kWh
+            'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': 0},
+            'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': 0},
+            'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
+            'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
+            'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
+            'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
+            'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
+            'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
+            'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
+            'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
+            'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
+            'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
+            'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
+            'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
+            'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
+            'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
+            'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
+            'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
+            'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
+            'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
+            'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
+            'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
+            'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
+            'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
+            'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
+            'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
+            'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
+            'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
+            'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
+            'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': 0}, # Lux
+            'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': 0},
+            'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': 0},
+            'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': 0},
+            'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': 0},
+            'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': 0},
+        }
 
         b.system = 'Domoticz' # Indica alla classe chi la stà istanziando
 
@@ -134,44 +165,56 @@ class BasePlugin:
             n += 1
         return n
 
-    def onStart(self):
-        self.debug = int(Parameters["Mode6"])
-        Domoticz.Debugging(self.debug)
-        Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
+    def devicesUpdate(self):
+        """ Dizionario self.devices con tutti i device presenti in domoticz """
         for d in Devices:
-            print("DEVICES:", Devices[d])
+            # print("DEVICES:", Devices[d])
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
-        
-        for k in b.config.keys(): # Per Board Type descriptions
-            if "BOARD" in k:
-                if b.config[k]['GENERAL_BOARD']['enable'] == 1:
-                    print("BOARD::", b.config[k]['GENERAL_BOARD']['enable'])  
-        
-        for board_id in b.mapiotype:
-            # Creazione dispositivi TEXT per ciascuna Board per inserire le caratteristiche del nodo
-            Device_board_characteristics = "{}-0".format(board_id)
-            # print("Device_board_characteristics", Device_board_characteristics)
-            if Device_board_characteristics not in self.devices['DeviceID2Unit'].keys():
-                """ Add new Devices """    
-                print("********** CREATE DEVICE *********", self.devices['DeviceID2Unit'])
-                unit_present = list(self.devices['Unit2DeviceID'].keys())
-                Unit = self.unitPresent(unit_present)
-                name = 'BOARD{} CHARACTERISTICS'.format(board_id)
-                dtype = 'Text'
-                description = "Caratteristiche della Board {}".format(board_id)
-                # print("Device_board_characteristics", Device_board_characteristics, unit_present, Unit, name, dtype, description)
-                Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=Device_board_characteristics, Used=True, Image=0).Create()
-                self.devices['Unit2DeviceID'][Unit] = Device_board_characteristics
-                self.devices['DeviceID2Unit'][Device_board_characteristics] = Unit
-            
+        # pprint(self.devices)
 
-            for logic_io in b.mapiotype[board_id]:
-                board_enable = b.mapiotype[board_id][logic_io]['board_enable']
-                io_enable = b.mapiotype[board_id][logic_io]['enable']
-                device_enable = board_enable & io_enable
+    def onStart(self):
+        self.debug = int(Parameters["Mode6"])
+        # self.debug = 0
+        Domoticz.Debugging(self.debug)
+        Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
+
+        for board_id in b.mapiotype: # Iterazione di tutte le board su config.json
+            self.devicesUpdate() # Aggiorna dizionario con i device di domoticz
+
+            # Creazione dispositivi TEXT per ciascuna Board per inserire le caratteristiche del nodo
+            DeviceID = "{}-0".format(board_id)
+            board_enable = b.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('enable', 1)
+            if DeviceID not in self.devices['DeviceID2Unit'].keys():
+                """ Create Devices 0 con le caratteristiche della scheda """                    
+                # print("Crea il device TEXT con le caratteristiche della BOARD: {}".format(board_id))
+                unit_present = list(self.devices['Unit2DeviceID'].keys())                
+                Unit = self.unitPresent(unit_present)    
+                dtype = 'Text'
+                name = 'BOARD{} CHARACTERISTICS'.format(board_id)
+                description = "Caratteristiche Board {}".format(board_id)
+
+                Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=self.typeNameDict[dtype]['Type'], Subtype=self.typeNameDict[dtype]['SubType'], \
+                    Description=description, Switchtype=0, Image=0, Options={}, Used=board_enable).Create()
+                
+                self.devices['Unit2DeviceID'][Unit] = DeviceID
+                self.devices['DeviceID2Unit'][DeviceID] = Unit
+            else:
+                # print("Update device TEXT con le caratteristiche della BOARD: {}".format(board_id))
+                Unit = self.devices['DeviceID2Unit'][DeviceID]
+                board_enable = b.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('enable', 1)
+                Devices[Unit].Update(Used=board_enable, nValue=0, sValue='')
+           
+            for logic_io in b.mapiotype[board_id]: # iterazione per ogni logic_io
+                self.devicesUpdate() # Aggiorna dizionario con i device di domoticz
+
+                description = b.mapiotype[board_id][logic_io]['description']
+                device_enable = b.mapiotype[board_id][logic_io]['enable'] and b.mapiotype[board_id][logic_io]['board_enable'] # Abilita il device se sulla configurazione sono abilitati
                 device_type = b.mapiotype[board_id][logic_io]['device_type']
-                print("DeviceType:", board_id, logic_io, board_enable, device_type)
+                dtype = b.mapiotype[board_id][logic_io]['dtype']
+                DeviceID = "{}-{}".format(board_id, logic_io)
+                # print("----- board_id: {}, logic_io: {}, board_enable: {}, device_type: {}".format(board_id, logic_io, board_enable, device_type))
+
                 if device_type in ['DIGITAL_IN_PULLUP', 'DIGITAL_IN']:
                     image = 9
                 elif device_type in ['DIGITAL_OUT']:
@@ -179,33 +222,28 @@ class BasePlugin:
                 else:
                     image = 0
 
-                DeviceID = "{}-{}".format(board_id, logic_io)
                 
                 name = "[{}] {}".format(DeviceID, b.mapiotype[board_id][logic_io]['name'])
-                description = b.mapiotype[board_id][logic_io]['description']
-                dtype = b.mapiotype[board_id][logic_io]['dtype']
-                device_enable = b.mapiotype[board_id][logic_io]['enable']
+                
+                # print("*** BoardID:{:>2} LogiIO:{:>3}  Device_enable:{:>3}  DeviceID:{:>6}".format(board_id, logic_io, device_enable, DeviceID))
 
-                # print("*** BID:{} IOID:{} - logic_io:{} Board_enable:{} - Domoticz Device ENABLE:{} - DeviceID:{}".format(board_id, board_enable, logic_io, io_enable, device_enable, DeviceID))
-
-                if dtype not in self.typeName:
+                if dtype not in self.typeNameDict:
                     Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
-
-                if dtype == "None":
+                    sys.exit()
                     continue
-                # print(">>>>>>>>>>>>>>><DTYPE", dtype)
-
-                if DeviceID not in self.devices['DeviceID2Unit'].keys():
-                    unit_present = list(self.devices['Unit2DeviceID'].keys())
-                    Unit = self.unitPresent(unit_present)
-                    Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
-                    self.devices['Unit2DeviceID'][Unit] = DeviceID
-                    self.devices['DeviceID2Unit'][DeviceID] = Unit
-                    Domoticz.Log("Create Device: Name:{:10}    Dtype:{:10}    Used:{}".format(name, dtype, device_enable))
-
-                value = int(b.mapiotype[board_id][logic_io]['default_startup_value']) if 'default_startup_value' in b.mapiotype[board_id][logic_io] else 0
-                sValue = 'On' if value else 'Off'
-
+                
+                if dtype == "None":
+                    Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype NON IMPOSTATO: None => Board_id:{} Logic_io: {}".format(board_id, logic_io))
+                    sys.exit()
+                    continue
+                    
+                Type = self.typeNameDict[dtype]['Type']
+                SubType = self.typeNameDict[dtype]['SubType']                    
+                SwitchType = self.typeNameDict[dtype]['SwitchType']
+                
+                options = ''
+                value = 0
+                
                 if dtype == 'switch':
                     pass
                 elif dtype == 'Temp+Hum':
@@ -215,12 +253,33 @@ class BasePlugin:
                 elif dtype == 'kWh':
                     sValue = "0;0"
                 elif dtype == 'Custom Sensor':
+                    options = {'Custom': '1;{}'.format(b.mapiotype[board_id][logic_io]['dunit'])}
                     sValue = "0"
                 elif dtype == 'Counter Incremental': # mostra i Watt/ora
                     sValue = "0"
                 elif dtype == 'None':
                     print("Device che non deve essere aggiunto a Domoticz")
                     continue
+                
+
+                # print("====>>>>> Device: Unit:{:<3} Dtype: {:20}    nValue: {:<3}    sValue: {:<5}  Used: {} OPTIONS: {} Name: {:30}".format(Unit, dtype, value, sValue, device_enable, options, name))
+                
+                # print(DeviceID, self.devices['DeviceID2Unit'].keys())
+                if DeviceID not in self.devices['DeviceID2Unit'].keys():
+                    """ Crea Device """
+                    unit_present = list(self.devices['Unit2DeviceID'].keys())
+                    Unit = self.unitPresent(unit_present)
+                    
+                    ### Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
+                    
+                    Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=Type, Subtype=SubType, Switchtype=SwitchType, Description=description, Image=0, \
+                        Options={}, Used=device_enable).Create()
+
+                    self.devices['Unit2DeviceID'][Unit] = DeviceID
+                    self.devices['DeviceID2Unit'][DeviceID] = Unit
+                    
+                    Domoticz.Log("====>>>>> Create Device: Unit:{:5} DeviceID:{:>5} Dtype: {:20}    Used: {} OPTIONS: {}    Name: {:30}"
+                        .format(Unit, DeviceID, dtype, device_enable, options, name))
 
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
 
@@ -229,28 +288,18 @@ class BasePlugin:
 
                 if not b.overwrite_text and Devices[Unit].Name != name:  # check if Domoticz description is equal to config description
                     name = Devices[Unit].Name
-                print("-------------", DeviceID, dtype)
-                Devices[Unit].Update(Name=name, TypeName=dtype, Description=description, nValue=value, sValue=sValue, Used=device_enable)
-                Domoticz.Log("Update Device: Dtype:{:20}    nValue{:5}    sValue:{:7}    Used:{}    Name:{:30}".format(dtype, value, sValue, device_enable, name))
 
-        # self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address = Parameters["SerialPort"], Baud = int(Parameters["Mode3"]))
-        # self.SerialConn = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
+                Domoticz.Log("=> Update Dev: Un:{:3} DevID:{:>4} T:{:>3} SubT:{:>3} SwitchT:{:>3} Dtype: {:20} nVal: {:<1} sVal: {:>4} Used: {} opt: {:<10} Name: {:30}"
+                    .format(Unit, DeviceID, Type, SubType, SwitchType, dtype, Devices[Unit].nValue, Devices[Unit].sValue, device_enable, str(options), name))
+                
+                Devices[Unit].Update(Name=name, Type=Type, Subtype=SubType, Switchtype=SwitchType, Description=description, nValue=Devices[Unit].nValue, sValue=Devices[Unit].sValue, Used=device_enable, Options=options)
+                
         b.Connection = Domoticz.Connection(Name="DL485", Transport="Serial", Address=b.bus_port, Baud=b.bus_baudrate)
-        
-        # self.SerialConn.Connect()
         b.Connection.Connect()
 
-        # configuration = b.getConfiguration()  # Set configuration of boards
-        # b.TXmsg = configuration # Mette trama configurazione in lista da inviare
-        # b.TXmsg += [b.getBoardType(0)] # Request GetTypeBoard Informations
-        
-
     def onStop(self):
-
         if b.telegram_enable: # Telegram is activated
             pass # To do
-
-
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
     def onConnect(self, Connection, Status, Description):
@@ -479,10 +528,10 @@ class BasePlugin:
                 # b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = value, sValue = str(value))
 
-            elif dtype == 'Counter Incremental':
+            # elif dtype == 'Counter Incremental':
                 # print("==>>>", board_id, logic_io, value)
-                b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value)&1, sValue = str(int(value)&1))
+                # b.status[board_id]['io'][logic_io - 1] = value
+                # Devices[Unit].Update(nValue = int(value)&1, sValue = str(int(value)&1))
 
             elif dtype == "kWh":
                 # value = b.calculate(board_id, logic_io, value)
@@ -500,11 +549,12 @@ class BasePlugin:
                     return 0
                 b.status[board_id]['io'][logic_io - 1] = value
                 
+                # print('------------', board_id, logic_io, value)
                 Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10))
 
 
             elif dtype == "Custom Sensor":
-                # value = b.calculate(board_id, logic_io, value)
+                # print("Custom Sensor", value)
                 b.status[board_id]['io'][logic_io - 1] = value
                 Devices[Unit].Update(nValue = int(value), sValue="{}".format(value))
 
@@ -535,7 +585,7 @@ class BasePlugin:
     def onMessage(self, Connection, RXbytes):
         for d in RXbytes:
             b.RXtrama = b.readSerial(d)
-
+            b.cron()
             if not b.RXtrama: continue
 
             b.arrivatatrama()
@@ -590,7 +640,7 @@ class BasePlugin:
                     pass
                     # print("{:<7}  NO COMUNICA IO         {}".format(b.nowtime, b.RXtrama))
 
-            b.writeLog()
+            # b.writeLog()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("{} {} {} {} {} {} {} {} {}".format("onNotification DL485-SERIAL plugin", self, Name, Subject, Text, Status, Priority, Sound, ImageFile))
