@@ -31,16 +31,11 @@ from dl485 import Bus, Log
 
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
-logstate = 2 # Abilita la stampa del DEBUG: 1==scrivi su log, 2==stampa a video
+logstate = 2 # 0==Debug disabilitato, 1==scrivi su log, 2==stampa a video
 b = Bus(config_file_name, logstate)  # Istanza la classe Bus
 # log = Log()  # Istanza la classe Log
-DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
-# Configurazione SCHEDE
-# msg = b.resetEE(1, 0)  # Board_id, logic_io. Se logic_io=0, resetta tutti gli IO
-# print(msg)
-# b.TXmsg += msg
-# b.dictBoardIo()  # Crea il DICT con i valori IO basato sul file di configurazione (solo board attive)
 
+DevicesCreate = {} # DICT con tutti i dispositivi DL485 creati
 
 """
 Image:
@@ -74,7 +69,8 @@ class BasePlugin:
             'DeviceID2Unit': {},
         } 
 
-        self.typeNameDict = {        
+        self.typeNameDict = {   
+            'None'                          : {},     
             'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': 0},
             'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': 0},
             'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': 0},
@@ -168,15 +164,13 @@ class BasePlugin:
     def devicesUpdate(self):
         """ Dizionario self.devices con tutti i device presenti in domoticz """
         for d in Devices:
-            # print("DEVICES:", Devices[d])
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
-        # pprint(self.devices)
 
     def onStart(self):
         self.debug = int(Parameters["Mode6"])
-        # self.debug = 0
         Domoticz.Debugging(self.debug)
+        b.log.logstate = self.debug & 3
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
 
         for board_id in b.mapiotype: # Iterazione di tutte le board su config.json
@@ -228,13 +222,13 @@ class BasePlugin:
                 # print("*** BoardID:{:>2} LogiIO:{:>3}  Device_enable:{:>3}  DeviceID:{:>6}".format(board_id, logic_io, device_enable, DeviceID))
 
                 if dtype not in self.typeNameDict:
-                    Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
-                    sys.exit()
+                    Domoticz.Log("            ==>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
+                    # sys.exit()
                     continue
                 
                 if dtype == "None":
-                    Domoticz.Log("========>>>>>>>>>>>>>>>>>>> ERROR DEVICE dtype NON IMPOSTATO: None => Board_id:{} Logic_io: {}".format(board_id, logic_io))
-                    sys.exit()
+                    # Domoticz.Log("            ==>> ERROR DEVICE dtype NON IMPOSTATO: None => Board_id:{} Logic_io: {}".format(board_id, logic_io))
+                    # sys.exit()
                     continue
                     
                 Type = self.typeNameDict[dtype]['Type']
@@ -258,7 +252,7 @@ class BasePlugin:
                 elif dtype == 'Counter Incremental': # mostra i Watt/ora
                     sValue = "0"
                 elif dtype == 'None':
-                    print("Device che non deve essere aggiunto a Domoticz")
+                    # print("Device che non deve essere aggiunto a Domoticz")
                     continue
                 
 
@@ -318,7 +312,7 @@ class BasePlugin:
 
         if not DeviceID in self.devices['DeviceID2Unit']:
             # pprint(self.devices)
-            print("CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ:", DeviceID)
+            print("            CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ: {}".format(DeviceID))
             return
 
         Unit = self.devices['DeviceID2Unit'][DeviceID]
@@ -350,85 +344,85 @@ class BasePlugin:
 
                 plc_function = b.mapiotype[board_id][logic_io]['plc_function']
 
-                if linked_proc and plc_function == 'disable' and 1==2: # Da rifare perché non FUNZIONA
-                    """
-                        elenco linked proc
-                        toggle
-                        direct (accetta un solo ingresso e lo replica direttamente)
-                        invert (accetta un solo ingresso e lo replica invertito)
-                        and (n ingressi in and)
-                        or
-                        xor
-                        nand
-                        nor
-                        nxor
-                    """
+                # if linked_proc and plc_function == 'disable' and 1==2: # Da rifare perché non FUNZIONA
+                #     """
+                #         elenco linked proc
+                #         toggle
+                #         direct (accetta un solo ingresso e lo replica direttamente)
+                #         invert (accetta un solo ingresso e lo replica invertito)
+                #         and (n ingressi in and)
+                #         or
+                #         xor
+                #         nand
+                #         nor
+                #         nxor
+                #     """
 
-                    for x_out in linked_proc:
-                        x_outa = x_out.split("-")
-                        x_board_id = int(x_outa[0])
-                        x_logic_io = int(x_outa[1])
+                #     for x_out in linked_proc:
+                #         x_outa = x_out.split("-")
+                #         x_board_id = int(x_outa[0])
+                #         x_logic_io = int(x_outa[1])
 
-                        app_linked_proc = linked_proc["%s-%s" %(x_outa[0], x_outa[1])]['linked_proc']
+                #         app_linked_proc = linked_proc["%s-%s" %(x_outa[0], x_outa[1])]['linked_proc']
 
-                        if app_linked_proc == 'toggle':
-                            if x_value & 0b100:
-                                value = b.status[x_board_id]['io'][x_logic_io - 1]
-                                value = 1 - value
+                #         if app_linked_proc == 'toggle':
+                #             if x_value & 0b100:
+                #                 value = b.status[x_board_id]['io'][x_logic_io - 1]
+                #                 value = 1 - value
 
-                                value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                                # print("TOGGLE", x_out, value)
-                                msg = b.writeIO(x_board_id, x_logic_io, [value])
-                                b.TXmsg.append(msg)
+                #                 value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #                 # print("TOGGLE", x_out, value)
+                #                 msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #                 b.TXmsg.append(msg)
 
-                        elif app_linked_proc == 'direct':
-                            value = x_value & 1
-                            value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                            # print("DIRECT", x_out, value)
-                            msg = b.writeIO(x_board_id, x_logic_io, [value])
-                            b.TXmsg.append(msg)
+                #         elif app_linked_proc == 'direct':
+                #             value = x_value & 1
+                #             value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #             # print("DIRECT", x_out, value)
+                #             msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #             b.TXmsg.append(msg)
 
-                        elif app_linked_proc == 'invert':
-                            value = (x_value & 1) ^ 1
-                            value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                            # print("INVERT", x_out, value)
-                            msg = b.writeIO(x_board_id, x_logic_io, [value])
-                            b.TXmsg.append(msg)
-                        elif app_linked_proc == 'and':
-                            linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
-                            # print("linked_board_id_logic_io", linked_board_id_logic_io)
-                            value = 1
-                            for ii in linked_board_id_logic_io:
-                                ii_outa = ii.split("-")
-                                ii_board_id = int(ii_outa[0])
-                                ii_logic_io = int(ii_outa[1])
-                                value = value & b.status[ii_board_id]['io'][ii_logic_io - 1]
-                            value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                            msg = b.writeIO(x_board_id, x_logic_io, [value])
-                            b.TXmsg.append(msg)
+                #         elif app_linked_proc == 'invert':
+                #             value = (x_value & 1) ^ 1
+                #             value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #             # print("INVERT", x_out, value)
+                #             msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #             b.TXmsg.append(msg)
+                #         elif app_linked_proc == 'and':
+                #             linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
+                #             # print("linked_board_id_logic_io", linked_board_id_logic_io)
+                #             value = 1
+                #             for ii in linked_board_id_logic_io:
+                #                 ii_outa = ii.split("-")
+                #                 ii_board_id = int(ii_outa[0])
+                #                 ii_logic_io = int(ii_outa[1])
+                #                 value = value & b.status[ii_board_id]['io'][ii_logic_io - 1]
+                #             value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #             msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #             b.TXmsg.append(msg)
 
-                        elif app_linked_proc == 'or':
-                            linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
-                            value = 0
-                            for ii in linked_board_id_logic_io:
-                                ii_outa = ii.split("-")
-                                ii_board_id = int(ii_outa[0])
-                                ii_logic_io = int(ii_outa[1])
-                                value = value | b.status[ii_board_id]['io'][ii_logic_io - 1]
-                            value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                            msg = b.writeIO(x_board_id, x_logic_io, [value])
-                            b.TXmsg.append(msg)
-                        elif app_linked_proc == 'xor':
-                            linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
-                            value = 0
-                            for ii in linked_board_id_logic_io:
-                                ii_outa = ii.split("-")
-                                ii_board_id = int(ii_outa[0])
-                                ii_logic_io = int(ii_outa[1])
-                                value = value ^ b.status[ii_board_id]['io'][ii_logic_io - 1]
-                            value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
-                            msg = b.writeIO(x_board_id, x_logic_io, [value])
-                            b.TXmsg.append(msg)
+                #         elif app_linked_proc == 'or':
+                #             linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
+                #             value = 0
+                #             for ii in linked_board_id_logic_io:
+                #                 ii_outa = ii.split("-")
+                #                 ii_board_id = int(ii_outa[0])
+                #                 ii_logic_io = int(ii_outa[1])
+                #                 value = value | b.status[ii_board_id]['io'][ii_logic_io - 1]
+                #             value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #             msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #             b.TXmsg.append(msg)
+                #         elif app_linked_proc == 'xor':
+                #             linked_board_id_logic_io = b.mapiotype[x_board_id][x_logic_io]['linked_board_id_logic_io']
+                #             value = 0
+                #             for ii in linked_board_id_logic_io:
+                #                 ii_outa = ii.split("-")
+                #                 ii_board_id = int(ii_outa[0])
+                #                 ii_logic_io = int(ii_outa[1])
+                #                 value = value ^ b.status[ii_board_id]['io'][ii_logic_io - 1]
+                #             value = b.make_inverted(x_board_id, x_logic_io, value)  # Inverte l'IO se definito sul file di configurazione
+                #             msg = b.writeIO(x_board_id, x_logic_io, [value])
+                #             b.TXmsg.append(msg)
 
             
             elif dtype == 'Voltage':
@@ -562,11 +556,8 @@ class BasePlugin:
                 pass
             
             elif dtype == "Text": # Triphase
-                print("DEVICE TEXT ancora da fare", board_id, logic_io, value)
+                print("            ==>> DEVICE TEXT ancora da fare", board_id, logic_io, value)
             
-            elif dtype == "None":
-                print("DEVICE None ancora da fare", board_id, logic_io, value)
-
             else:
                 # print(" NON MAPPATO ", board_id, logic_io, value, dtype)
                 Domoticz.Log("{             DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(b.nowtime, board_id, logic_io, value, dtype))
@@ -616,7 +607,7 @@ class BasePlugin:
                     Unit = self.devices['DeviceID2Unit']["{}-0".format(b.RXtrama[0])]
                     Devices[Unit].Update(nValue=1, sValue=msg)
                 except:
-                    print("ERROR: Board ID {} non impostata su Domoticz".format(b.RXtrama[0]))
+                    print("            ==>> ERROR: Board ID {} non impostata su Domoticz".format(b.RXtrama[0]))
                 
                 # Devices[Unit].Update(nValue = 0, sValue = sValue)
 
