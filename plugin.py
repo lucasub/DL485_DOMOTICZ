@@ -60,9 +60,6 @@ Image:
 """ LOOP """
 class BasePlugin:
     def __init__(self):
-        # self.messageQueue = queue.Queue()
-        # self.messageThread = threading.Thread(name="QueueThread", target=BasePlugin.handleMessage, args=(self,))
-
         self.debug = 0
         self.devices = { # DICT with all devices
             'Unit2DeviceID': {},
@@ -70,77 +67,77 @@ class BasePlugin:
         } 
 
         self.typeNameDict = {   
-            'None'                          : {},     
-            'Temperature'                   : { 'Type': 80,         'SubType': 5,       'SwitchType': 0},
-            'Humidity'                      : { 'Type': 81,         'SubType': 1,       'SwitchType': 0},
-            'Temp+Hum'                      : { 'Type': 82,         'SubType': 1,       'SwitchType': 0},
-            'Temp+Hum+Baro'                 : { 'Type': 84,         'SubType': 1,       'SwitchType': 0},
-            'Temp+Hum+Baro2'                : { 'Type': 84,         'SubType': 2,       'SwitchType': 0},
-            'Weather Station Temp+Hum+Baro' : { 'Type': 84,         'SubType': 16,      'SwitchType': 0},
-            'Rain'                          : { 'Type': 85,         'SubType': 1,       'SwitchType': 0},
-            'Wind'                          : { 'Type': 86,         'SubType': 1,       'SwitchType': 0},
-            'UV'                            : { 'Type': 87,         'SubType': 1,       'SwitchType': 0},
-            'Ampere (3 Phase)'              : { 'Type': 89,         'SubType': 1,       'SwitchType': 0},
-            'Scale Weight'                  : { 'Type': 93,         'SubType': 1,       'SwitchType': 0},
-            'Counter'                       : { 'Type': 113,        'SubType': 0,       'SwitchType': 0},
-            'RGBW'                          : { 'Type': 241,        'SubType': 1,       'SwitchType': 0},
-            'RGB'                           : { 'Type': 241,        'SubType': 2,       'SwitchType': 0},
-            'White'                         : { 'Type': 241,        'SubType': 3,       'SwitchType': 0},
-            'RGBWW'                         : { 'Type': 241,        'SubType': 4,       'SwitchType': 0},
-            'RGBWZ'                         : { 'Type': 241,        'SubType': 6,       'SwitchType': 0},
-            'RGBWWZ'                        : { 'Type': 241,        'SubType': 7,       'SwitchType': 0},
-            'Cold white+Warm white'         : { 'Type': 241,        'SubType': 8,       'SwitchType': 0},
-            'Setpoint'                      : { 'Type': 242,        'SubType': 1,       'SwitchType': 0},
-            'General Visibility'            : { 'Type': 243,        'SubType': 1,       'SwitchType': 0},
-            'General Solar Radiation'       : { 'Type': 243,        'SubType': 2,       'SwitchType': 0},
-            'General Solar Moisture'        : { 'Type': 243,        'SubType': 3,       'SwitchType': 0},
-            'General Leaf Wetness'          : { 'Type': 243,        'SubType': 4,       'SwitchType': 0},
-            'General Percentage'            : { 'Type': 243,        'SubType': 6,       'SwitchType': 0},
-            'Voltage'                       : { 'Type': 243,        'SubType': 8,       'SwitchType': 0}, # General Voltage
-            'General Pressure'              : { 'Type': 243,        'SubType': 9,       'SwitchType': 0},
-            'Text'                          : { 'Type': 243,        'SubType': 19,      'SwitchType': 0}, # General Text
-            'General Alert'                 : { 'Type': 243,        'SubType': 22,      'SwitchType': 0},
-            'Current (Single)'              : { 'Type': 243,        'SubType': 23,      'SwitchType': 0}, # General Ampere (1 Phase)
-            'General Sound Level'           : { 'Type': 243,        'SubType': 24,      'SwitchType': 0},
-            'General Barometer'             : { 'Type': 243,        'SubType': 26,      'SwitchType': 0},
-            'General Distance'              : { 'Type': 243,        'SubType': 27,      'SwitchType': 0},
-            'Counter Incremental'           : { 'Type': 243,        'SubType': 28,      'SwitchType': 0}, # General Counter Incremental
-            'kWh'                           : { 'Type': 243,        'SubType': 29,      'SwitchType': 0}, # General kWh
-            'General Waterflow'             : { 'Type': 243,        'SubType': 30,      'SwitchType': 0},
-            'Custom Sensor'                 : { 'Type': 243,        'SubType': 31,      'SwitchType': 0},
-            'General Managed counter Energy': { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
-            'General Managed counter Gas'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
-            'General Managed counter Water' : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
-            'General Managed counter Counter':{ 'Type': 243,        'SubType': 33,      'SwitchType': 3},
-            'General Managed counter Energy Generated': {'Type': 243, 'SubType': 33,      'SwitchType': 4},
-            'General Managed counter Time'  : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
-            'Switch'                        : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
-            'Selector Switch Doorbell'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
-            'Selector Switch Contact'       : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
-            'Selector Switch Blinds'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
-            'Selector Switch X10 Siren'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
-            'Selector Switch Smoke Detector': { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
-            'Selector Switch Blinds Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
-            'Selector Switch Dimmer'        : { 'Type': 244,        'SubType': 62,      'SwitchType': 7},
-            'Selector Switch Motion Sensor' : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
-            'Selector Switch Push On Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
-            'Selector Switch Push Off Button': { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
-            'Switch Door Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
-            'Switch Dusk Sensor'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
-            'Switch Blinds Percentage'      : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
-            'Switch Venetian Blinds US'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
-            'Switch Venetian Blinds EU'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
-            'Switch Blinds Percentage Inverted': { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
-            'Switch Media Player'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
-            'Switch Selector'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
-            'Switch Door Lock'              : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
-            'Switch Door Lock Inverted'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
-            'Illumination'                  : { 'Type': 246,        'SubType': 1,      'SwitchType': 0}, # Lux
-            'Temp+Baro'                     : { 'Type': 247,        'SubType': 1,      'SwitchType': 0},
-            'Usage Electric'                : { 'Type': 248,        'SubType': 1,      'SwitchType': 0},
-            'Air Quality'                   : { 'Type': 249,        'SubType': 1,      'SwitchType': 0},
-            'P1 Smart Meter Energy'         : { 'Type': 250,        'SubType': 1,      'SwitchType': 0},
-            'P1 Smart Meter Gas'            : { 'Type': 246,        'SubType': 1,      'SwitchType': 0},
+            'None'                              : {},     
+            'Temperature'                       : { 'Type': 80,         'SubType': 5,       'SwitchType': 0},
+            'Humidity'                          : { 'Type': 81,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum'                          : { 'Type': 82,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum+Baro'                     : { 'Type': 84,         'SubType': 1,       'SwitchType': 0},
+            'Temp+Hum+Baro2'                    : { 'Type': 84,         'SubType': 2,       'SwitchType': 0},
+            'Weather Station Temp+Hum+Baro'     : { 'Type': 84,         'SubType': 16,      'SwitchType': 0},
+            'Rain'                              : { 'Type': 85,         'SubType': 1,       'SwitchType': 0},
+            'Wind'                              : { 'Type': 86,         'SubType': 1,       'SwitchType': 0},
+            'UV'                                : { 'Type': 87,         'SubType': 1,       'SwitchType': 0},
+            'Ampere (3 Phase)'                  : { 'Type': 89,         'SubType': 1,       'SwitchType': 0},
+            'Scale Weight'                      : { 'Type': 93,         'SubType': 1,       'SwitchType': 0},
+            'Counter'                           : { 'Type': 113,        'SubType': 0,       'SwitchType': 0},
+            'RGBW'                              : { 'Type': 241,        'SubType': 1,       'SwitchType': 0},
+            'RGB'                               : { 'Type': 241,        'SubType': 2,       'SwitchType': 0},
+            'White'                             : { 'Type': 241,        'SubType': 3,       'SwitchType': 0},
+            'RGBWW'                             : { 'Type': 241,        'SubType': 4,       'SwitchType': 0},
+            'RGBWZ'                             : { 'Type': 241,        'SubType': 6,       'SwitchType': 0},
+            'RGBWWZ'                            : { 'Type': 241,        'SubType': 7,       'SwitchType': 0},
+            'Cold white+Warm white'             : { 'Type': 241,        'SubType': 8,       'SwitchType': 0},
+            'Setpoint'                          : { 'Type': 242,        'SubType': 1,       'SwitchType': 0},
+            'General Visibility'                : { 'Type': 243,        'SubType': 1,       'SwitchType': 0},
+            'General Solar Radiation'           : { 'Type': 243,        'SubType': 2,       'SwitchType': 0},
+            'General Solar Moisture'            : { 'Type': 243,        'SubType': 3,       'SwitchType': 0},
+            'General Leaf Wetness'              : { 'Type': 243,        'SubType': 4,       'SwitchType': 0},
+            'General Percentage'                : { 'Type': 243,        'SubType': 6,       'SwitchType': 0},
+            'Voltage'                           : { 'Type': 243,        'SubType': 8,       'SwitchType': 0}, # General Voltage
+            'General Pressure'                  : { 'Type': 243,        'SubType': 9,       'SwitchType': 0},
+            'Text'                              : { 'Type': 243,        'SubType': 19,      'SwitchType': 0}, # General Text
+            'General Alert'                     : { 'Type': 243,        'SubType': 22,      'SwitchType': 0},
+            'Current (Single)'                  : { 'Type': 243,        'SubType': 23,      'SwitchType': 0}, # General Ampere (1 Phase)
+            'General Sound Level'               : { 'Type': 243,        'SubType': 24,      'SwitchType': 0},
+            'General Barometer'                 : { 'Type': 243,        'SubType': 26,      'SwitchType': 0},
+            'General Distance'                  : { 'Type': 243,        'SubType': 27,      'SwitchType': 0},
+            'Counter Incremental'               : { 'Type': 243,        'SubType': 28,      'SwitchType': 0}, # General Counter Incremental
+            'kWh'                               : { 'Type': 243,        'SubType': 29,      'SwitchType': 0}, # General kWh
+            'General Waterflow'                 : { 'Type': 243,        'SubType': 30,      'SwitchType': 0},
+            'Custom Sensor'                     : { 'Type': 243,        'SubType': 31,      'SwitchType': 0},
+            'General Managed counter Energy'    : { 'Type': 243,        'SubType': 33,      'SwitchType': 0},
+            'General Managed counter Gas'       : { 'Type': 243,        'SubType': 33,      'SwitchType': 1},
+            'General Managed counter Water'     : { 'Type': 243,        'SubType': 33,      'SwitchType': 2},
+            'General Managed counter Counter'   : { 'Type': 243,        'SubType': 33,      'SwitchType': 3},
+            'General Managed counter Energy Generated': {'Type': 243,   'SubType': 33,      'SwitchType': 4},
+            'General Managed counter Time'      : { 'Type': 243,        'SubType': 33,      'SwitchType': 5},
+            'Switch'                            : { 'Type': 244,        'SubType': 62,      'SwitchType': 0}, # Selector Switch On/Off
+            'Selector Switch Doorbell'          : { 'Type': 244,        'SubType': 62,      'SwitchType': 1},
+            'Selector Switch Contact'           : { 'Type': 244,        'SubType': 62,      'SwitchType': 2},
+            'Selector Switch Blinds'            : { 'Type': 244,        'SubType': 62,      'SwitchType': 3},
+            'Selector Switch X10 Siren'         : { 'Type': 244,        'SubType': 62,      'SwitchType': 4},
+            'Selector Switch Smoke Detector'    : { 'Type': 244,        'SubType': 62,      'SwitchType': 5},
+            'Selector Switch Blinds Inverted'   : { 'Type': 244,        'SubType': 62,      'SwitchType': 6},
+            'Selector Switch Dimmer'            : { 'Type': 244,        'SubType': 73,      'SwitchType': 7},
+            'Selector Switch Motion Sensor'     : { 'Type': 244,        'SubType': 62,      'SwitchType': 8},
+            'Selector Switch Push On Button'    : { 'Type': 244,        'SubType': 62,      'SwitchType': 9},
+            'Selector Switch Push Off Button'   : { 'Type': 244,        'SubType': 62,      'SwitchType': 10},
+            'Switch Door Contact'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 11},
+            'Switch Dusk Sensor'                : { 'Type': 244,        'SubType': 62,      'SwitchType': 12},
+            'Switch Blinds Percentage'          : { 'Type': 244,        'SubType': 62,      'SwitchType': 13},
+            'Switch Venetian Blinds US'         : { 'Type': 244,        'SubType': 62,      'SwitchType': 14},
+            'Switch Venetian Blinds EU'         : { 'Type': 244,        'SubType': 62,      'SwitchType': 15},
+            'Switch Blinds Percentage Inverted' : { 'Type': 244,        'SubType': 62,      'SwitchType': 16},
+            'Switch Media Player'               : { 'Type': 244,        'SubType': 62,      'SwitchType': 17},
+            'Switch Selector'                   : { 'Type': 244,        'SubType': 62,      'SwitchType': 18},
+            'Switch Door Lock'                  : { 'Type': 244,        'SubType': 62,      'SwitchType': 19},
+            'Switch Door Lock Inverted'         : { 'Type': 244,        'SubType': 62,      'SwitchType': 20},
+            'Illumination'                      : { 'Type': 246,        'SubType': 1,      'SwitchType': 0}, # Lux
+            'Temp+Baro'                         : { 'Type': 247,        'SubType': 1,      'SwitchType': 0},
+            'Usage Electric'                    : { 'Type': 248,        'SubType': 1,      'SwitchType': 0},
+            'Air Quality'                       : { 'Type': 249,        'SubType': 1,      'SwitchType': 0},
+            'P1 Smart Meter Energy'             : { 'Type': 250,        'SubType': 1,      'SwitchType': 0},
+            'P1 Smart Meter Gas'                : { 'Type': 246,        'SubType': 1,      'SwitchType': 0},
         }
 
         b.system = 'Domoticz' # Indica alla classe chi la stà istanziando
@@ -189,7 +186,7 @@ class BasePlugin:
                 description = "Caratteristiche Board {}".format(board_id)
 
                 Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=self.typeNameDict[dtype]['Type'], Subtype=self.typeNameDict[dtype]['SubType'], \
-                    Description=description, Switchtype=0, Image=0, Options={}, Used=board_enable).Create()
+                    Description=description, Switchtype=self.typeNameDict[dtype]['Switchtype'], Image=0, Options={}, Used=board_enable).Create()
                 
                 self.devices['Unit2DeviceID'][Unit] = DeviceID
                 self.devices['DeviceID2Unit'][DeviceID] = Unit
@@ -222,21 +219,21 @@ class BasePlugin:
                 # print("*** BoardID:{:>2} LogiIO:{:>3}  Device_enable:{:>3}  DeviceID:{:>6}".format(board_id, logic_io, device_enable, DeviceID))
 
                 if dtype not in self.typeNameDict:
-                    Domoticz.Log("            ==>> ERROR DEVICE dtype: {}. Device name is NOT CORRECT!!!".format(dtype))
-                    # sys.exit()
-                    continue
+                    Domoticz.Log("            ==>> ERROR DEVICE dtype: {} on board_id:{} logic_io:{} is NOT CORRECT!!!".format(dtype, board_id, logic_io))
+                    sys.exit()
+                    # continue
                 
                 if dtype == "None":
                     # Domoticz.Log("            ==>> ERROR DEVICE dtype NON IMPOSTATO: None => Board_id:{} Logic_io: {}".format(board_id, logic_io))
                     # sys.exit()
                     continue
-                    
+
                 Type = self.typeNameDict[dtype]['Type']
                 SubType = self.typeNameDict[dtype]['SubType']                    
                 SwitchType = self.typeNameDict[dtype]['SwitchType']
                 
                 options = ''
-                value = 0
+                # value = 0
                 
                 if dtype == 'switch':
                     pass
@@ -424,11 +421,18 @@ class BasePlugin:
                 #             msg = b.writeIO(x_board_id, x_logic_io, [value])
                 #             b.TXmsg.append(msg)
 
+            elif dtype == "Selector Switch Dimmer": # Dimmer
+                # print(f"===>>>DIMMER board_id:{board_id} - logic_io:{logic_io} - value:{value} - value_calcolato:{int(value * 0.3922)}")
+                b.status[board_id]['io'][logic_io - 1] = value
+                sValue = int(value * 0.3922)
+                nValue = 1 if value else 0
+                #'nValue', 'sValue', 'Image', 'SignalLevel', 'BatteryLevel', 'Options', 'TimedOut', 'Name', 'TypeName', 'Type', 'Subtype', 'Switchtype', 'Used', 'Description', 'Color' or 'SuppressTriggers'
+                Devices[Unit].Update(nValue=nValue, sValue="{}".format(sValue))
             
             elif dtype == 'Voltage':
                 sValue = str(value)
                 b.status[board_id]['io'][logic_io - 1] = value
-                Devices[Unit].Update(nValue = int(value), sValue = sValue)
+                Devices[Unit].Update(nValue=int(value), sValue=sValue)
 
             elif dtype == 'Temperature':
                 if value:
@@ -554,23 +558,37 @@ class BasePlugin:
 
             elif dtype == "Current/Ampere": # Triphase
                 pass
-            
+
             elif dtype == "Text": # Triphase
                 print("            ==>> DEVICE TEXT ancora da fare", board_id, logic_io, value)
             
             else:
                 # print(" NON MAPPATO ", board_id, logic_io, value, dtype)
-                Domoticz.Log("{             DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(b.nowtime, board_id, logic_io, value, dtype))
+                Domoticz.Log("DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(board_id, logic_io, value, dtype))
 
             Domoticz.Log("  {}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
 
     def onCommand(self, Unit, Command, Level, Hue):
-        # print("onCommand", Unit, Command, Level, Hue)
+        print(f"onCommand: Unit:{Unit}, Command:{Command}, Level:{Level}, Hue:{Hue}")
         bio = Devices[Unit].DeviceID.split("-")
         board_id = int(bio[0])
         logic_io = int(bio[1])
-        value = 1 if Command == 'On' else 0
+        if Command == 'Off':
+            value = 0
+        elif Command == 'On':
+            value = 1
+            if "plc_function" in b.mapiotype[board_id][logic_io] and b.mapiotype[board_id][logic_io]["plc_function"] == 'dimmer':
+                value = int(Level * 2.55)
+        elif Command == 'Set Level':
+            if "plc_function" in b.mapiotype[board_id][logic_io] and b.mapiotype[board_id][logic_io]["plc_function"] == 'dimmer':
+                value = int(Level * 2.55)
+            else:
+                value = Level
+        else:
+            print("================== Command NON DEFINITO", Command)
+
         msg = b.writeIO(board_id, logic_io, [value])
+        # print("MSG:", msg)
         b.TXmsg.append(msg)
 
     def onMessage(self, Connection, RXbytes):
