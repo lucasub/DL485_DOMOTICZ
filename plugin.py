@@ -81,7 +81,7 @@ class BasePlugin:
             'Scale Weight'                      : { 'Type': 93,         'SubType': 1,       'SwitchType': 0},
             'Counter'                           : { 'Type': 113,        'SubType': 0,       'SwitchType': 0},
             'RGBW'                              : { 'Type': 241,        'SubType': 1,       'SwitchType': 0},
-            'RGB'                               : { 'Type': 241,        'SubType': 2,       'SwitchType': 0},
+            'RGB'                               : { 'Type': 241,        'SubType': 2,       'SwitchType': 7},
             'White'                             : { 'Type': 241,        'SubType': 3,       'SwitchType': 0},
             'RGBWW'                             : { 'Type': 241,        'SubType': 4,       'SwitchType': 0},
             'RGBWZ'                             : { 'Type': 241,        'SubType': 6,       'SwitchType': 0},
@@ -138,6 +138,28 @@ class BasePlugin:
             'Air Quality'                       : { 'Type': 249,        'SubType': 1,      'SwitchType': 0},
             'P1 Smart Meter Energy'             : { 'Type': 250,        'SubType': 1,      'SwitchType': 0},
             'P1 Smart Meter Gas'                : { 'Type': 246,        'SubType': 1,      'SwitchType': 0},
+        }
+
+        self.nValueDict = { # Significato dei valori nValue di Switch:
+            0: "Off",
+            1: "On",
+            2: "sValue",
+            3: "Group Off",
+            4: "Group On",
+            5: "Set Group Level sValue",
+            6: "Dim",
+            7: "Gright",
+            8: "Sound 0",
+            9: "Sound 1",
+            10: "Sound 2",
+            11: "Sound 3",
+            12: "Sound 4",
+            13: "Sound 5",
+            14: "Sound 6",
+            15: "Sound 7",
+            16: "Sound 8",
+            17: "Stop",
+            18: "Program",
         }
 
         b.system = 'Domoticz' # Indica alla classe chi la stà istanziando
@@ -422,12 +444,22 @@ class BasePlugin:
                 #             b.TXmsg.append(msg)
 
             elif dtype == "Selector Switch Dimmer": # Dimmer
-                # print(f"===>>>DIMMER board_id:{board_id} - logic_io:{logic_io} - value:{value} - value_calcolato:{int(value * 0.3922)}")
                 b.status[board_id]['io'][logic_io - 1] = value
-                sValue = int(value * 0.3922)
-                nValue = 1 if value else 0
-                #'nValue', 'sValue', 'Image', 'SignalLevel', 'BatteryLevel', 'Options', 'TimedOut', 'Name', 'TypeName', 'Type', 'Subtype', 'Switchtype', 'Used', 'Description', 'Color' or 'SuppressTriggers'
-                Devices[Unit].Update(nValue=nValue, sValue="{}".format(sValue))
+                sValue = int(round(value * 0.3922))
+                nValue = 2 if value else 0
+                # print(f"===>>>     DIMMER {board_id}-{logic_io} - value:{value} - nValue:{nValue} - sValue:{sValue}")
+                Devices[Unit].Update(nValue=nValue, sValue=str(sValue))
+
+            elif dtype == "RGB": # RGB
+                # Da fare
+                print(f"=*****==>>>     RGB {board_id}-{logic_io}", value)
+                # pprint(b.mapiotype[board_id][logic_io])
+                # b.status[board_id]['io'][logic_io - 1] = value
+                # sValue = int(round(value * 0.3922))
+                # nValue = 2 if value else 0
+                
+                # Devices[Unit].Update(nValue=nValue, sValue=str(sValue))
+            
             
             elif dtype == 'Voltage':
                 sValue = str(value)
@@ -569,7 +601,7 @@ class BasePlugin:
             Domoticz.Log("  {}-{} value:{}  Device:{:20}".format(board_id, logic_io, value, dtype))
 
     def onCommand(self, Unit, Command, Level, Hue):
-        print(f"onCommand: Unit:{Unit}, Command:{Command}, Level:{Level}, Hue:{Hue}")
+        print(f"===>>> onCommand: Unit:{Unit}, Command:{Command}, Level:{Level}, Hue:{Hue}")
         bio = Devices[Unit].DeviceID.split("-")
         board_id = int(bio[0])
         logic_io = int(bio[1])
@@ -584,8 +616,29 @@ class BasePlugin:
                 value = int(Level * 2.55)
             else:
                 value = Level
+        elif Command == 'Set Color':
+            
+            Hue = eval(Hue) # String to dict
+            # red = Hue['r']
+            # green = Hue['g']
+            # blue = Hue['b']
+            for k in Hue:
+                if k == 'r':
+                    print("RED:", Hue[k])
+                    msg = b.writeIO(board_id, 1, [Hue[k]])
+                    b.TXmsg.append(msg)
+                elif k == 'g':
+                    print("GREEN:", Hue[k])
+                    msg = b.writeIO(board_id, 2, [Hue[k]])
+                    b.TXmsg.append(msg)
+                elif k == 'b':
+                    print("BLUE:", Hue[k])
+                    msg = b.writeIO(board_id, 3, [Hue[k]])
+                    b.TXmsg.append(msg)
+            value = Level
         else:
             print("================== Command NON DEFINITO", Command)
+
 
         msg = b.writeIO(board_id, logic_io, [value])
         # print("MSG:", msg)
@@ -601,13 +654,13 @@ class BasePlugin:
 
             if len(b.RXtrama)>1 and b.RXtrama[1] == b.code['CR_GET_BOARD_TYPE'] | 32: # Risposta con infomrazioni delle varie Board
                 board_id = b.RXtrama[0]
-                
                 msg = "Configurazione della BOARD{}:\n".format(board_id)
                 msg += 'Board Type: {}\n'.format(b.get_board_type[board_id]['board_type'])
                 msg += 'Data Firmware: {}\n'.format(b.get_board_type[board_id]['data_firmware'])
                 msg += 'I/O Numbers: {}\n'.format(b.get_board_type[board_id]['io_number'])
                 msg += 'I2C: {}\n'.format(b.get_board_type[board_id]['i2c'])
                 msg += 'One Wire: {}\n'.format(b.get_board_type[board_id]['onewire'])
+                msg += 'Dimmer: {}\n'.format(b.get_board_type[board_id]['dimmer'])
                 msg += 'PLC: {}\n'.format(b.get_board_type[board_id]['plc'])
                 msg += 'Power On: {}\n'.format(b.get_board_type[board_id]['power_on'])
                 msg += 'PWM: {}\n'.format(b.get_board_type[board_id]['pwm'])
@@ -636,7 +689,7 @@ class BasePlugin:
 
                 # if b.RXtrama[1] & 0xDF == b.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
                 if b.RXtrama[1] in [ b.code['COMUNICA_IO'], b.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA                    
-                    # print("onMessage>>>", b.RXtrama)
+                    # print("onMessage>>>", b.RXtrama, "RxValue:", b.RXtrama[3:])
                     value = b.calculate(b.RXtrama[0], b.RXtrama[1], b.RXtrama[2], b.RXtrama[3:])  # Aggiorna DOMOTICZ
                     # print("VALUE::", value)
                     self.updateIO(b.RXtrama[0], b.RXtrama[2], value)  # Aggiorna DOMOTICZ
