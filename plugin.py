@@ -25,10 +25,6 @@ from pprint import pprint
 import json
 from dl485 import Bus, Log
 
-# import threading
-# import queue
-
-
 print("-" * 50, "Begin DL485-Serial plugin", "-" * 50, end="\n")
 config_file_name = "/home/pi/domoticz/plugins/DL485_DOMOTICZ/config.json"  # File di configurazione
 logstate = 2 # 0==Debug disabilitato, 1==scrivi su log, 2==stampa a video
