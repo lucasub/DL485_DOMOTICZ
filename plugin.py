@@ -1,5 +1,5 @@
 """
-<plugin key="DLBOARD" name="DL Board plugin - SERIAL" author="Luca Subiaco e Daniele Gava" version="1.1" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
+<plugin key="DL485_V1" name="DL Board plugin V1 - SERIAL" author="Luca Subiaco e Daniele Gava" version="1.3" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
 	<params>
          <param field="Mode6" label="Debug" width="125px">
             <options>
@@ -204,7 +204,7 @@ class BasePlugin:
                 description = "Caratteristiche Board {}".format(board_id)
 
                 Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=self.typeNameDict[dtype]['Type'], Subtype=self.typeNameDict[dtype]['SubType'], \
-                    Description=description, Switchtype=self.typeNameDict[dtype]['Switchtype'], Image=0, Options={}, Used=board_enable).Create()
+                    Description=description, Switchtype=self.typeNameDict[dtype]['SwitchType'], Image=0, Options={}, Used=board_enable).Create()
                 
                 self.devices['Unit2DeviceID'][Unit] = DeviceID
                 self.devices['DeviceID2Unit'][DeviceID] = Unit
