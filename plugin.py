@@ -27,6 +27,8 @@ import os
 from pprint import pprint
 import sys
 import time
+# import paho.mqtt.client as Client
+
 PATH = os.path.dirname(os.path.abspath(__file__))
 
 print("-" * 50, "Begin DL485-Serial plugin V2", "-" * 50, end="\n")
@@ -64,10 +66,10 @@ class BasePlugin(Bus):
         self.devices = { # DICT with all devices
             'Unit2DeviceID': {},
             'DeviceID2Unit': {},
-        } 
+        }
 
-        self.typeNameDict = {   
-            'None'                              : {},     
+        self.typeNameDict = {
+            'None'                              : {},
             'Temperature'                       : { 'Type': 80,         'SubType': 5,       'SwitchType': 0},
             'Humidity'                          : { 'Type': 81,         'SubType': 1,       'SwitchType': 0},
             'Temp+Hum'                          : { 'Type': 82,         'SubType': 1,       'SwitchType': 0},
@@ -186,14 +188,10 @@ class BasePlugin(Bus):
             self.devices['Unit2DeviceID'][Devices[d].Unit] = Devices[d].DeviceID
             self.devices['DeviceID2Unit'][Devices[d].DeviceID] = Devices[d].Unit
 
-
-
     def onStart(self):
-   
-   
         self.debug = int(Parameters["Mode6"])
         Domoticz.Debugging(self.debug)
-        self.log.logstate = self.debug & 3
+        self.logstate = self.debug & 3
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
 
         for board_id in self.mapiotype: # Iterazione di tutte le board su config.json
@@ -203,17 +201,17 @@ class BasePlugin(Bus):
             DeviceID = "{}-0".format(board_id)
             board_enable = self.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('enable', 1)
             if DeviceID not in self.devices['DeviceID2Unit'].keys():
-                """ Create Devices 0 con le caratteristiche della scheda """                    
+                """ Create Devices 0 con le caratteristiche della scheda """
                 # print("Crea il device TEXT con le caratteristiche della BOARD: {}".format(board_id))
-                unit_present = list(self.devices['Unit2DeviceID'].keys())                
-                Unit = self.unitPresent(unit_present)    
+                unit_present = list(self.devices['Unit2DeviceID'].keys())
+                Unit = self.unitPresent(unit_present)
                 dtype = 'Text'
                 name = 'BOARD{} CHARACTERISTICS'.format(board_id)
                 description = "Caratteristiche Board {}".format(board_id)
-                                
+
                 Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=self.typeNameDict[dtype]['Type'], Subtype=self.typeNameDict[dtype]['SubType'], \
                     Description=description, Switchtype=self.typeNameDict[dtype]['SwitchType'], Image=0, Options={}, Used=board_enable).Create()
-                
+
                 self.devices['Unit2DeviceID'][Unit] = DeviceID
                 self.devices['DeviceID2Unit'][DeviceID] = Unit
             else:
@@ -221,7 +219,7 @@ class BasePlugin(Bus):
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
                 board_enable = self.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('enable', 1)
                 Devices[Unit].Update(Used=board_enable, nValue=0, sValue='')
-           
+
             for logic_io in self.mapiotype[board_id]: # iterazione per ogni logic_io
                 self.devicesUpdate() # Aggiorna dizionario con i device di domoticz
 
@@ -239,28 +237,28 @@ class BasePlugin(Bus):
                 else:
                     image = 0
 
-                
+
                 name = "[{}] {}".format(DeviceID, self.mapiotype[board_id][logic_io]['name'])
-                
+
                 # print("*** BoardID:{:>2} LogiIO:{:>3}  Device_enable:{:>3}  DeviceID:{:>6}".format(board_id, logic_io, device_enable, DeviceID))
 
                 if dtype not in self.typeNameDict:
                     Domoticz.Log("            ==>> ERROR DEVICE dtype: {} on board_id:{} logic_io:{} is NOT CORRECT!!!".format(dtype, board_id, logic_io))
                     sys.exit()
                     # continue
-                
+
                 if dtype == "None":
                     # Domoticz.Log("            ==>> ERROR DEVICE dtype NON IMPOSTATO: None => Board_id:{} Logic_io: {}".format(board_id, logic_io))
                     # sys.exit()
                     continue
 
                 Type = self.typeNameDict[dtype]['Type']
-                SubType = self.typeNameDict[dtype]['SubType']                    
+                SubType = self.typeNameDict[dtype]['SubType']
                 SwitchType = self.typeNameDict[dtype]['SwitchType']
-                
+
                 options = ''
                 # value = 0
-                
+
                 if dtype == 'switch':
                     pass
                 elif dtype == 'Temp+Hum':
@@ -277,24 +275,24 @@ class BasePlugin(Bus):
                 elif dtype == 'None':
                     # print("Device che non deve essere aggiunto a Domoticz")
                     continue
-                
+
 
                 # print("====>>>>> Device: Unit:{:<3} Dtype: {:20}    nValue: {:<3}    sValue: {:<5}  Used: {} OPTIONS: {} Name: {:30}".format(Unit, dtype, value, sValue, device_enable, options, name))
-                
+
                 # print(DeviceID, self.devices['DeviceID2Unit'].keys())
                 if DeviceID not in self.devices['DeviceID2Unit'].keys():
                     """ Crea Device """
                     unit_present = list(self.devices['Unit2DeviceID'].keys())
                     Unit = self.unitPresent(unit_present)
-                    
+
                     ### Domoticz.Device(Name=name, Unit=Unit, TypeName=dtype, Description=description, DeviceID=DeviceID, Used=device_enable, Image=image).Create()
-                    
+
                     Domoticz.Device(DeviceID=DeviceID, Name=name, Unit=Unit, Type=Type, Subtype=SubType, Switchtype=SwitchType, Description=description, Image=0, \
                         Options={}, Used=device_enable).Create()
 
                     self.devices['Unit2DeviceID'][Unit] = DeviceID
                     self.devices['DeviceID2Unit'][DeviceID] = Unit
-                    
+
                     Domoticz.Log("====>>>>> Create Device: Unit:{:5} DeviceID:{:>5} Dtype: {:20}    Used: {} OPTIONS: {}    Name: {:30}"
                         .format(Unit, DeviceID, dtype, device_enable, options, name))
 
@@ -308,15 +306,16 @@ class BasePlugin(Bus):
 
                 Domoticz.Log("=> Update Dev: Un:{:3} DevID:{:>4} T:{:>3} SubT:{:>3} SwitchT:{:>3} Dtype: {:20} nVal: {:<1} sVal: {:>4} Used: {} opt: {:<10} Name: {:30}"
                     .format(Unit, DeviceID, Type, SubType, SwitchType, dtype, Devices[Unit].nValue, Devices[Unit].sValue, device_enable, str(options), name))
-                
+
                 Devices[Unit].Update(Name=name, Type=Type, Subtype=SubType, Switchtype=SwitchType, Description=description, nValue=Devices[Unit].nValue, sValue=Devices[Unit].sValue, Used=device_enable, Options=options)
-                
+
         self.Connection = Domoticz.Connection(Name="DL485", Transport="Serial", Address=self.bus_port, Baud=self.bus_baudrate)
         self.Connection.Connect()
 
     def onStop(self):
         if self.telegram_enable: # Telegram is activated
             pass # To do
+        self.client.loop_stop()
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
     def onConnect(self, Connection, Status, Description):
@@ -461,10 +460,10 @@ class BasePlugin(Bus):
                 # self.status[board_id]['io'][logic_io - 1] = value
                 # sValue = int(round(value * 0.3922))
                 # nValue = 2 if value else 0
-                
+
                 # Devices[Unit].Update(nValue=nValue, sValue=str(sValue))
-            
-            
+
+
             elif dtype == 'Voltage':
                 sValue = str(value)
                 self.status[board_id]['io'][logic_io - 1] = value
@@ -582,7 +581,7 @@ class BasePlugin(Bus):
                 if not value:
                     return 0
                 self.status[board_id]['io'][logic_io - 1] = value
-                
+
                 # print('------------', board_id, logic_io, value)
                 Devices[Unit].Update(nValue = int(value), sValue="{};{}".format(value, 10))
 
@@ -597,7 +596,7 @@ class BasePlugin(Bus):
 
             elif dtype == "Text": # Triphase
                 print("            ==>> DEVICE TEXT ancora da fare", board_id, logic_io, value)
-            
+
             else:
                 # print(" NON MAPPATO ", board_id, logic_io, value, dtype)
                 Domoticz.Log("DEVICE non MAPPATO      {}-{} value:{} Device DTYPE non MAPPATO / ERRATO: {:20}    ".format(board_id, logic_io, value, dtype))
@@ -621,7 +620,7 @@ class BasePlugin(Bus):
             else:
                 value = Level
         elif Command == 'Set Color':
-            
+
             Hue = eval(Hue) # String to dict
             # red = Hue['r']
             # green = Hue['g']
@@ -645,14 +644,14 @@ class BasePlugin(Bus):
 
 
         msg = self.writeIO(board_id, logic_io, [value])
-        # print("MSG:", msg)
+        print("MSG:", msg)
         self.TXmsg.append(msg)
 
     def onMessage(self, Connection, RXbytes):
         for d in RXbytes:
             # self.RXtrama = self.readSerial(d)
             self.RXtrama = self.bus_dl485.readSerial(d)
-            
+
             self.cron()
             if not self.RXtrama: continue
 
@@ -672,7 +671,7 @@ class BasePlugin(Bus):
                 msg += 'PWM: {}\n'.format(self.get_board_type[board_id]['pwm'])
                 msg += 'RFID: {}\n'.format(self.get_board_type[board_id]['rfid'])
                 msg += 'PRO: {}\n'.format(self.get_board_type[board_id]['protection'])
-                
+
 
                 # pprint(self.get_board_type[board_id])
                 if len(self.get_board_type[board_id]) == 14: # Informazioni su nuove schede
@@ -685,7 +684,7 @@ class BasePlugin(Bus):
                     Devices[Unit].Update(nValue=1, sValue=msg)
                 except:
                     print("            ==>> ERROR: Board ID {} non impostata su Domoticz".format(self.RXtrama[0]))
-                
+
                 # Devices[Unit].Update(nValue = 0, sValue = sValue)
 
             # print(self.RXtrama) # Non togliere altrimenti non funziona
@@ -694,7 +693,7 @@ class BasePlugin(Bus):
                 # if (self.RXtrama[1] & 0xDF) in self.code: # comando valido o feedback a comando valido
 
                 # if self.RXtrama[1] & 0xDF == self.code['COMUNICA_IO']:  # COMUNICA_IO / Scrive valore USCITA
-                if self.RXtrama[1] in [ self.code['COMUNICA_IO'], self.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA                    
+                if self.RXtrama[1] in [ self.code['COMUNICA_IO'], self.code['RFID'] ]:  # COMUNICA_IO / Scrive valore USCITA
                     # print("onMessage>>>", self.RXtrama, "RxValue:", self.RXtrama[3:])
                     value = self.calculate(self.RXtrama[0], self.RXtrama[1], self.RXtrama[2], self.RXtrama[3:])  # Aggiorna DOMOTICZ
                     # print("VALUE::", value)
