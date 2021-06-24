@@ -334,7 +334,7 @@ class BasePlugin(Bus):
 
         if not DeviceID in self.devices['DeviceID2Unit']:
             # pprint(self.devices)
-            print("            CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ: {}".format(DeviceID))
+            print("                      CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ: {}".format(DeviceID))
             return
 
         Unit = self.devices['DeviceID2Unit'][DeviceID]
