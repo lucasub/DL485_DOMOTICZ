@@ -1,5 +1,5 @@
 """
-<plugin key="DLBOARD" name="DL Board plugin V2 - SERIAL" author="Luca Subiaco e Daniele Gava" version="2.1" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
+<plugin key="DL4852" name="DL2 Board plugin V2 - SERIAL" author="Luca Subiaco e Daniele Gava" version="2.2" externallink="https://www.dmocontrol.info/" wikilink="https://www.domocontrol.info">
 	<params>
          <param field="Mode6" label="Debug" width="125px">
             <options>
