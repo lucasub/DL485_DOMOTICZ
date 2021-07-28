@@ -193,13 +193,14 @@ class BasePlugin(Bus):
         Domoticz.Debugging(self.debug)
         self.logstate = self.debug & 3
         Domoticz.Log("Start DL485 Loop Plugin with Debug: {}".format(self.debug))
-
+        
         for board_id in self.mapiotype: # Iterazione di tutte le board su config.json
             self.devicesUpdate() # Aggiorna dizionario con i device di domoticz
-
+            
             # Creazione dispositivi TEXT per ciascuna Board per inserire le caratteristiche del nodo
             DeviceID = "{}-0".format(board_id)
             board_enable = self.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('enable', 1)
+            board_name = self.config['BOARD{}'.format(board_id)]['GENERAL_BOARD'].get('name', '')
             if DeviceID not in self.devices['DeviceID2Unit'].keys():
                 """ Create Devices 0 con le caratteristiche della scheda """
                 # print("Crea il device TEXT con le caratteristiche della BOARD: {}".format(board_id))
@@ -223,6 +224,7 @@ class BasePlugin(Bus):
             for logic_io in self.mapiotype[board_id]: # iterazione per ogni logic_io
                 self.devicesUpdate() # Aggiorna dizionario con i device di domoticz
 
+                board_overwrite_text = self.mapiotype[board_id][logic_io]['board_overwrite_text']
                 description = self.mapiotype[board_id][logic_io]['description']
                 device_enable = self.mapiotype[board_id][logic_io]['enable'] and self.mapiotype[board_id][logic_io]['board_enable'] # Abilita il device se sulla configurazione sono abilitati
                 device_type = self.mapiotype[board_id][logic_io]['device_type']
@@ -238,7 +240,7 @@ class BasePlugin(Bus):
                     image = 0
 
 
-                name = "[{}] {}".format(DeviceID, self.mapiotype[board_id][logic_io]['name'])
+                name = "[{}] {} {}".format(DeviceID, board_name, self.mapiotype[board_id][logic_io]['name'])
 
                 # print("*** BoardID:{:>2} LogiIO:{:>3}  Device_enable:{:>3}  DeviceID:{:>6}".format(board_id, logic_io, device_enable, DeviceID))
 
@@ -298,12 +300,13 @@ class BasePlugin(Bus):
 
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
 
-                if not self.overwrite_text and Devices[Unit].Description != description:  # check if Domoticz description is equal to config description
+                # print("-------------------", self.overwrite_text, board_overwrite_text, name)
+                if self.overwrite_text and board_overwrite_text:  # Overtwite Domoticz Name and Description
+                    pass
+                else:
                     description = Devices[Unit].Description
-
-                if not self.overwrite_text and Devices[Unit].Name != name:  # check if Domoticz description is equal to config description
                     name = Devices[Unit].Name
-
+                    
                 Domoticz.Log("=> Update Dev: Un:{:3} DevID:{:>4} T:{:>3} SubT:{:>3} SwitchT:{:>3} Dtype: {:20} nVal: {:<1} sVal: {:>4} Used: {} opt: {:<10} Name: {:30}"
                     .format(Unit, DeviceID, Type, SubType, SwitchType, dtype, Devices[Unit].nValue, Devices[Unit].sValue, device_enable, str(options), name))
 
@@ -315,7 +318,7 @@ class BasePlugin(Bus):
     def onStop(self):
         if self.telegram_enable: # Telegram is activated
             pass # To do
-        self.client.loop_stop()
+        # self.client.loop_stop()
         Domoticz.Log("{} {}".format("onStop DL485-SERIAL plugin", self))
 
     def onConnect(self, Connection, Status, Description):
@@ -334,7 +337,7 @@ class BasePlugin(Bus):
 
         if not DeviceID in self.devices['DeviceID2Unit']:
             # pprint(self.devices)
-            print("                      CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ: {}".format(DeviceID))
+            print("                         CHIAVE NON TROVATA SUL DICT IO di DOMOTICZ: {}".format(DeviceID))
             return
 
         Unit = self.devices['DeviceID2Unit'][DeviceID]
@@ -454,8 +457,9 @@ class BasePlugin(Bus):
                 Devices[Unit].Update(nValue=nValue, sValue=str(sValue))
 
             elif dtype == "RGB": # RGB
+                pass
                 # Da fare
-                print(f"=*****==>>>     RGB {board_id}-{logic_io}", value)
+                # print(f"=*****==>>>     RGB {board_id}-{logic_io}", value)
                 # pprint(self.mapiotype[board_id][logic_io])
                 # self.status[board_id]['io'][logic_io - 1] = value
                 # sValue = int(round(value * 0.3922))
