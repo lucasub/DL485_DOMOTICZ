@@ -301,7 +301,7 @@ class BasePlugin(Bus):
                 Unit = self.devices['DeviceID2Unit'][DeviceID]
 
                 # print("-------------------", self.overwrite_text, board_overwrite_text, name)
-                if self.overwrite_text and board_overwrite_text:  # Overtwite Domoticz Name and Description
+                if self.overwrite_text or board_overwrite_text:  # Overtwite Domoticz Name and Description
                     pass
                 else:
                     description = Devices[Unit].Description
