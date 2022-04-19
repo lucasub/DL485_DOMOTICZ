@@ -663,26 +663,18 @@ class BasePlugin(Bus):
 
             if len(self.RXtrama)>1 and self.RXtrama[1] == self.code['CR_GET_BOARD_TYPE'] | 32: # Risposta con infomrazioni delle varie Board
                 board_id = self.RXtrama[0]
-                msg = "Configurazione della BOARD{}:\n".format(board_id)
-                msg += 'Board Type: {}\n'.format(self.get_board_type[board_id]['board_type'])
-                msg += 'Data Firmware: {}\n'.format(self.get_board_type[board_id]['data_firmware'])
-                msg += 'I/O Numbers: {}\n'.format(self.get_board_type[board_id]['io_number'])
-                msg += 'I2C: {}\n'.format(self.get_board_type[board_id]['i2c'])
-                msg += 'One Wire: {}\n'.format(self.get_board_type[board_id]['onewire'])
-                msg += 'Dimmer: {}\n'.format(self.get_board_type[board_id]['dimmer'])
-                msg += 'PLC: {}\n'.format(self.get_board_type[board_id]['plc'])
-                msg += 'Power On: {}\n'.format(self.get_board_type[board_id]['power_on'])
-                msg += 'PWM: {}\n'.format(self.get_board_type[board_id]['pwm'])
-                msg += 'RFID: {}\n'.format(self.get_board_type[board_id]['rfid'])
-                msg += 'PRO: {}\n'.format(self.get_board_type[board_id]['protection'])
+                msg = "BOARD{} - Type:{}\n".format(board_id, self.get_board_type[board_id]['board_type'])
+                msg += 'Max I/O:{} - Firmare of:{}\n'.format(self.get_board_type[board_id]['io_number'], self.get_board_type[board_id]['data_firmware'])
+                msg += 'I2C:{} - One Wire:{}\n'.format(self.get_board_type[board_id]['i2c'], self.get_board_type[board_id]['onewire'])
+                msg += 'PLC:{} - Power On:{}\n'.format(self.get_board_type[board_id]['plc'], self.get_board_type[board_id]['power_on'])
+                msg += 'PWM:{} - RFID:{}\n'.format(self.get_board_type[board_id]['pwm'], self.get_board_type[board_id]['rfid'])
+                msg += 'Dimmer:      {}\n'.format(self.get_board_type[board_id]['dimmer'])
+                msg += 'PRO:         {}\n'.format(self.get_board_type[board_id]['protection'])
 
-
-                # pprint(self.get_board_type[board_id])
-                if len(self.get_board_type[board_id]) == 14: # Informazioni su nuove schede
+                pprint(self.get_board_type[board_id])
+                if len(self.get_board_type[board_id]) >= 15: # Informazioni su nuove schede
                     msg += 'RMS_POWER: {}\n'.format(self.get_board_type[board_id]['rms_power'])
-                    msg += 'N. ERROR CONFLICT: {}\n'.format(self.get_board_type[board_id]['error_conflict'])
-                    msg += 'N. ERROR IO: {}\n'.format(self.get_board_type[board_id]['error_logic_io_fisic_io'])
-
+                    msg += 'ERRORS: CONFLICT:{} - IO DUP:{}\n'.format(self.get_board_type[board_id]['error_conflict'], self.get_board_type[board_id]['error_logic_io_fisic_io'])
                 try:
                     Unit = self.devices['DeviceID2Unit']["{}-0".format(self.RXtrama[0])]
                     Devices[Unit].Update(nValue=1, sValue=msg)
